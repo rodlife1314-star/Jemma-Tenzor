@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TokenizerProfile",
+  "description": "Validation profile defining safe vocabulary boundaries, special tokens, and context bounds for Jemma-Tenzor tokenization",
+  "type": "OBJECT",
+  "properties": {
+    "model_name": {
+      "type": "STRING",
+      "description": "The exact name or identifier of the target model"
+    },
+    "vocab_size": {
+      "type": "INTEGER",
+      "minimum": 1,
+      "description": "The expected number of unique tokens in the vocabulary"
+    },
+    "max_sequence_length": {
+      "type": "INTEGER",
+      "minimum": 1,
+      "description": "The maximum sequence length supported by the compiled TensorRT-LLM engine"
+    },
+    "pad_token_id": {
+      "type": "INTEGER",
+      "minimum": 0
+    },
+    "bos_token_id": {
+      "type": "INTEGER",
+      "minimum": 0
+    },
+    "eos_token_id": {
+      "type": "INTEGER",
+      "minimum": 0
+    },
+    "special_tokens_map": {
+      "type": "OBJECT",
+      "properties": {
+        "unk_token": { "type": "STRING" },
+        "bos_token": { "type": "STRING" },
+        "eos_token": { "type": "STRING" },
+        "pad_token": { "type": "STRING" }
+      },
+      "additionalProperties": true
+    },
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "decode_extra_spaces": { "type": "BOOLEAN" },
+        "add_prefix_space": { "type": "BOOLEAN" },
+        "clean_up_tokenization_spaces": { "type": "BOOLEAN" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "required": ["model_name", "vocab_size", "max_sequence_length", "eos_token_id"],
+  "additionalProperties": false
+}

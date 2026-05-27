@@ -62,12 +62,17 @@ This document establishes the official taxonomy of all imported upstream files w
 
 ### Token Processing & Parsing (`tokenizer_reference/`)
 *   **Description**: Highly optimized vocabulary loading, processing, and multi-threaded sentence boundaries decoding.
-*   **Classification**: `SAFE_REFERENCE`
-*   **Dependency Relationships**: Interacts directly with the `transformers` library tokenizer assets.
-*   **Runtime Requirements**: Low-overhead CPU parsing routines.
+*   **Classification**: `SAFE_REFERENCE` (Fully Populated)
+*   **Populated Assets**:
+    *   `tokenizer_reference/README.md` (Design guidelines and classification)
+    *   `tokenizer_reference/tokenizer_boundary_notes.md` (Detailed boundary limits, UTF-8 continuity protocols, splitter algorithms)
+    *   `tokenizer_reference/tokenizer_profile.schema.json` (Structured schema map validating parameters, vocab sizes, and token identifiers)
+    *   `tests/test_tokenizer_reference.py` (Local unit tests validating UTF-8 window adjustments, chunk boundary calculation algorithms, and schema adherence)
+*   **Dependency Relationships**: Interacts with local JSON validators and `transformers` tokenizers.
+*   **Runtime Requirements**: Pure CPU local python environments.
 *   **Compile Requirements**: None.
 *   **CUDA Requirements**: None.
-*   **Integration Risk Level**: **Low**. Clean, safe, and easily deployable reference module.
+*   **Integration Risk Level**: **None**. Clean, verified CPU reference layers.
 
 ### Core Execution Orchestration (`orchestration_reference/`)
 *   **Description**: Process managers, queue controllers, and asynchrony stream handlers managing outstanding live requests.
