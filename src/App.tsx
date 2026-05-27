@@ -536,15 +536,15 @@ export default function App() {
                 <>
                   {ingestLogs.map((log, lIdx) => {
                     let textClass = "text-slate-400";
-                    if (log.includes("[INFO]")) textClass = "text-blue-400";
-                    if (log.includes("[CHECK]")) textClass = "text-amber-400/90";
-                    if (log.includes("[SUCCESS]")) textClass = "text-emerald-400";
-                    if (log.includes("gcloud")) textClass = "text-slate-100 font-semibold";
+                    if (log && log.includes("[INFO]")) textClass = "text-blue-400";
+                    if (log && log.includes("[CHECK]")) textClass = "text-amber-400/90";
+                    if (log && log.includes("[SUCCESS]")) textClass = "text-emerald-400";
+                    if (log && log.includes("gcloud")) textClass = "text-slate-100 font-semibold";
 
                     return (
                       <div key={lIdx} className={`${textClass} leading-relaxed flex gap-2`}>
                         <span className="text-slate-600 select-none">[{String(lIdx + 1).padStart(2, "0")}]</span>
-                        <span>{log}</span>
+                        <span>{log || ""}</span>
                       </div>
                     );
                   })}
