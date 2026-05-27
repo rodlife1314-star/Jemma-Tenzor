@@ -54,6 +54,8 @@ async def generate_token_stream(payload: InferencePayload):
     }
 
 if __name__ == "__main__":
+    import uvicorn
     print("[INFERENCE] Initializing FastAPI Orchestration interface...")
-    print("[INFO] Serving live gateway mapping endpoint on port 8000...")
-    # Safe validation debug trigger
+    print(f"[INFO] Serving live gateway mapping endpoint on port {os.environ.get('PORT', '8000')}...")
+    uvicorn.run("inference:app", host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
+

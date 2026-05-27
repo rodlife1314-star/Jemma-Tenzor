@@ -56,7 +56,7 @@ WORKDIR /octagon-app
 
 # Copy compiled engine workspace and scripts into live scope
 RUN mkdir -p /octagon-app/engine
-COPY ./inference.py /octagon-app/inference.py
+COPY ./src/jemma_tenzor/inference/gateway.py /octagon-app/inference.py
 COPY ./deploy/entrypoint.sh /octagon-app/entrypoint.sh
 RUN chmod +x /octagon-app/entrypoint.sh
 
