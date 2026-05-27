@@ -52,7 +52,13 @@ RUN pip3 install --no-cache-dir --upgrade pip
 
 # Import pre-resolved binaries and execute local offline installation
 COPY --from=builder /build/wheels /tmp/wheels
-RUN pip3 install --no-cache-dir --no-index --find-links=/tmp/wheels /tmp/wheels/*.whl && \
+RUN pip3 install --no-cache-dir --no-index --find-links=/tmp/wheels \
+    tensorrt_llm==0.10.0 \
+    fastapi \
+    uvicorn \
+    pydantic \
+    transformers \
+    numpy && \
     rm -rf /tmp/wheels
 
 WORKDIR /octagon-app

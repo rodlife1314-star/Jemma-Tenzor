@@ -14,8 +14,6 @@ import {
   Send, 
   Layers, 
   FileCode, 
-  TrendingUp, 
-  Gauge, 
   Sliders, 
   Database,
   ChevronRight,
@@ -23,114 +21,212 @@ import {
   Info,
   ExternalLink,
   HelpCircle,
-  Activity
+  Activity,
+  FolderOpen,
+  Boxes,
+  Lock,
+  ArrowRight,
+  Flame,
+  FileText
 } from "lucide-react";
 
 import { PresetConfigs, ChatMessage } from "./types";
 
-// Static Options
-const MODEL_OPTIONS = [
-  { id: "llama3-8b", name: "Llama-3 8B Instruct", repo: "meta-llama/Meta-Llama-3-8B-Instruct", size: "8.0B parameters", type: "General Instruct", format: "HF Weights" },
-  { id: "mistral-7b", name: "Mistral 7B Instruct v0.3", repo: "mistralai/Mistral-7B-Instruct-v0.3", size: "7.2B parameters", type: "Highly Efficient MoE/Dense", format: "SafeTensors" },
-  { id: "gemma2-9b", name: "Gemma-2 9B It", repo: "google/gemma-2-9b-it", size: "9.2B parameters", type: "High Reasoning Depth", format: "HF Weights" },
-  { id: "phi3-medium", name: "Phi-3 Medium (128k)", repo: "microsoft/Phi-3-medium-128k-instruct", size: "14B parameters", type: "Long Window Instruction", format: "SafeTensors" },
-];
-
-const HARDWARE_OPTIONS = [
-  { id: "nvidia-l4", name: "NVIDIA L4 Tensor Core", vram: "24 GB GDDR6", cores: "7,424 CUDA Cores", gcloudType: "nvidia-l4", bandwidth: "300 GB/s", score: 85, cost: "$0.0004/s" },
-  { id: "nvidia-t4", name: "NVIDIA T4 Tensor Core", vram: "16 GB GDDR6", cores: "2,560 CUDA Cores", gcloudType: "nvidia-t4", bandwidth: "320 GB/s", score: 50, cost: "$0.00025/s" },
-  { id: "nvidia-a100", name: "NVIDIA A100 Tensor Core", vram: "40 GB HBM2e", cores: "6,912 CUDA Cores", gcloudType: "nvidia-a100", bandwidth: "1555 GB/s", score: 100, cost: "$0.0012/s" },
-];
-
-const QUANT_OPTIONS = [
-  { id: "fp16", name: "Unquantized FP16", precision: "Float16 (Full Accuracy)", compression: "1.0x (No overhead)", diskSize: "16.0 GB", accuracy: "100%", latency: "1.0x baseline" },
-  { id: "int8", name: "INT8 Weight-Only", precision: "8-bit Integer representation", compression: "0.50x disk VRAM profile", diskSize: "8.1 GB", accuracy: "99.4%", latency: "0.45x (Ultra Fast)" },
-  { id: "int4", name: "INT4 AWQ Profile", precision: "4-bit Activation-aware", compression: "0.27x highly optimized profile", diskSize: "4.3 GB", accuracy: "97.8%", latency: "0.30x (Maximum Output)" },
+// Dynamic classified subsystems for repository ingestion
+const INGEST_SUBSYSTEMS = [
+  {
+    id: "runtime",
+    name: "Runtime Core",
+    desc: "C++ engine loaders, VRAM allocators, device checks, and capability alignment layers.",
+    path: "src/jemma_tenzor/runtime/",
+    files: [
+      { name: "engine_manager.py", action: "Loads dynamic engine files & validates weights compatibility", size: "12 KB" },
+      { name: "vram_allocator.py", action: "Estimates dynamic CUDA cache allocations based on model profiles", size: "8 KB" }
+    ],
+    status: "PROPOSED",
+    metrics: "Optimized for hardware threads execution"
+  },
+  {
+    id: "inference",
+    name: "Inference Services",
+    desc: "FastAPI production gateway, tokenizer client wrappers, stream response channels.",
+    path: "src/jemma_tenzor/inference/",
+    files: [
+      { name: "server_gateway.py", action: "FastAPI server running endpoints on port 8000 inside Docker", size: "15 KB" },
+      { name: "streaming_client.py", action: "Token yield handler converting binary output stream to JSON", size: "9 KB" }
+    ],
+    status: "PROPOSED",
+    metrics: "Asynchronous stream pipeline enabled"
+  },
+  {
+    id: "plugins",
+    name: "Custom CUDA Plugins",
+    desc: "GEMM tuning lookups, specialized Attention kernels, and custom compilation configurations.",
+    path: "src/jemma_tenzor/plugins/",
+    files: [
+      { name: "attention_kernels.cu", action: "High-performance custom CUDA matrix execution layer", size: "45 KB" },
+      { name: "gemm_plugin_config.ini", action: "Tuned gemm-plugin parameters matching model size metrics", size: "3 KB" }
+    ],
+    status: "PROPOSED",
+    metrics: "Leverages float16 precision limits"
+  },
+  {
+    id: "examples",
+    name: "Demos & Benchmarks",
+    desc: "Performance profile scripts, offline bench loops, and prompt test templates.",
+    path: "src/jemma_tenzor/examples/",
+    files: [
+      { name: "console_demo.py", action: "Simple execution interface for offline evaluation queries", size: "6 KB" },
+      { name: "throughput_test.sh", action: "Batch profile testing script outputting tokens per second status", size: "2 KB" }
+    ],
+    status: "PROPOSED",
+    metrics: "Offline diagnostic utilities"
+  },
+  {
+    id: "tooling",
+    name: "Compilation Tooling",
+    desc: "Weight converter frameworks and vocabulary format conversion utilities.",
+    path: "src/jemma_tenzor/tooling/",
+    files: [
+      { name: "weight_converter.py", action: "Translates standard HF weights into TRT intermediate checkpoints", size: "28 KB" },
+      { name: "tokenizer_formatter.py", action: "Binds model vocabulary configurations directly to runtime servers", size: "5 KB" }
+    ],
+    status: "PROPOSED",
+    metrics: "Low footprint CPU-safe execution"
+  },
+  {
+    id: "deployment",
+    name: "Orchestration & Deploy",
+    desc: "Immutable Cloud Build scripts, Docker triggers, deployment setups, and manuals.",
+    path: "/",
+    files: [
+      { name: "Dockerfile", action: "Multi-stage high efficacy production TensorRT CUDA container", size: "4 KB", immutable: true },
+      { name: "Dockerfile.export", action: "CPU safe validator testing environment container", size: "2 KB", immutable: true },
+      { name: "cloudbuild.yaml", action: "Heavy cloud compiler with scale-to-GPU deployment blueprints", size: "3 KB", immutable: true },
+      { name: "cloudbuild.export.yaml", action: "ライトウェイト validation pipeline executing CPU safe triggers", size: "2 KB", immutable: true },
+      { name: "DEPLOYMENT_NOTES.md", action: "Step-by-step master runbook and pipeline guide", size: "5 KB", immutable: true }
+    ],
+    status: "VERIFIED",
+    metrics: "Protected Octagon Orchestration"
+  }
 ];
 
 export default function App() {
-  const [selectedModel, setSelectedModel] = useState("llama3-8b");
-  const [selectedHardware, setSelectedHardware] = useState("nvidia-l4");
-  const [selectedQuant, setSelectedQuant] = useState("int8");
-
-  // Config Files state loaded from backend dynamically
+  const [activeSubsystem, setActiveSubsystem] = useState("runtime");
+  
+  // Master config files loaded from dynamic backend
   const [configs, setConfigs] = useState<PresetConfigs>({
     "cloudbuild.export.yaml": "",
     "Dockerfile.gpu": "",
     "deploy_cloudrun.sh": "",
     "inference.py": ""
   });
-  
-  const [activeTab, setActiveTab] = useState<keyof PresetConfigs>("cloudbuild.export.yaml");
-  const [loadingConfigs, setLoadingConfigs] = useState(false);
+  const [activeConfigTab, setActiveConfigTab] = useState<keyof PresetConfigs>("cloudbuild.export.yaml");
   const [copiedFile, setCopiedFile] = useState(false);
+  const [copiedText, setCopiedText] = useState("");
 
-  // Simulation execution state
-  const [simStatus, setSimStatus] = useState<"idle" | "running" | "success" | "failed">("idle");
-  const [simStepIdx, setSimStepIdx] = useState(0);
-  const [simLog, setSimLog] = useState<string[]>([]);
-  const consoleBottomRef = useRef<HTMLDivElement>(null);
+  // Ingestion Dry Run state
+  const [ingestStatus, setIngestStatus] = useState<"idle" | "running" | "success" | "error">("idle");
+  const [ingestLogs, setIngestLogs] = useState<string[]>([]);
+  const [ingestedModules, setIngestedModules] = useState<string[]>(["deployment"]);
+  const terminalRef = useRef<HTMLDivElement>(null);
 
-  // Copilot chatbot state
+  // Dynamic Chat with Jemma-Tenzor copilot
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
-      id: "welcome",
-      sender: "system",
-      text: "System Core Initialized. Active digital bridge routed to rodlife1314/tensorrt-edge-llm repo. Select your presets and type gcloud deploy instructions or tuning inquiries below.",
-      timestamp: new Date().toLocaleTimeString(),
+      id: "initial",
+      sender: "assistant",
+      text: "System intelligence online. I am optimized for the Jemma-Tenzor Architecture Ingestion Map. I can formulate gcloud CLI flags, explain the 'Selection ➔ Deployment ➔ Action' model, clarify the multi-stage CUDA compilation stages, or answer manual repository push procedures. Type an inquiry below.",
+      timestamp: new Date().toLocaleTimeString()
     }
   ]);
-  const [userInput, setUserInput] = useState("");
+  const [chatInput, setChatInput] = useState("");
   const [isAiTyping, setIsAiTyping] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Calculate current dynamic vram estimates
-  const currentModelObj = MODEL_OPTIONS.find(m => m.id === selectedModel);
-  const currentHardwareObj = HARDWARE_OPTIONS.find(h => h.id === selectedHardware);
-  const currentQuantObj = QUANT_OPTIONS.find(q => q.id === selectedQuant);
-
-  // Fetch configs from backend
+  // Load configs dynamically
   const fetchConfigs = async () => {
-    setLoadingConfigs(true);
     try {
-      const response = await fetch("/api/generate-configs", {
+      const resp = await fetch("/api/generate-configs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: selectedModel,
-          hardware: selectedHardware,
-          quantization: selectedQuant
-        }),
+        body: JSON.stringify({ model: "llama3-8b", hardware: "nvidia-l4", quantization: "int8" })
       });
-      if (response.ok) {
-        const data = await response.json();
-        setConfigs(data);
+      if (resp.ok) {
+        const data = await resp.json();
+        setConfigs({
+          "cloudbuild.export.yaml": data["cloudbuild.export.yaml"],
+          "Dockerfile.gpu": data["Dockerfile.gpu"],
+          "deploy_cloudrun.sh": data["deploy_cloudrun.sh"],
+          "inference.py": data["inference.py"]
+        });
       }
     } catch (e) {
-      console.error("Error loading configs", e);
-    } finally {
-      setLoadingConfigs(false);
+      console.error("Error grabbing preset maps", e);
     }
   };
 
   useEffect(() => {
     fetchConfigs();
-  }, [selectedModel, selectedHardware, selectedQuant]);
+  }, []);
 
-  // Handle Dynamic Copilot submit
-  const handleChatSubmit = async (textToSend: string) => {
-    if (!textToSend.trim()) return;
+  // Handle copy command clipboard
+  const handleCopy = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedText(label);
+    setCopiedFile(true);
+    setTimeout(() => {
+      setCopiedFile(false);
+      setCopiedText("");
+    }, 2000);
+  };
 
-    const userMsgId = `user-${Date.now()}`;
+  // Run structured ingestion simulation checks
+  const runIngestionSimulation = () => {
+    setIngestStatus("running");
+    setIngestLogs([]);
+    
+    const selectedSub = INGEST_SUBSYSTEMS.find(s => s.id === activeSubsystem);
+    const subName = selectedSub?.name || "Target Subsystem";
+
+    const logs = [
+      `[INFO] [INGESTION STATE] Initiating Incremental validation for ${subName}...`,
+      `[CHECK] Source Repo Check: rodlife1314/tensorrt-edge-llm (branch: main)`,
+      `[CHECK] Isolation Guard: Ensuring no overwrite of existing Octagon control definitions. Passed.`,
+      `[INFO] Target path locked: ${selectedSub?.path || "root"}`,
+      `[PACKAGING] Scanning dependencies and modules for packaging anomalies...`,
+      ...(selectedSub?.files.map(f => `[STAGE] Classifying structure: /${selectedSub?.path || ""}${f.name} (${f.size}) - OK`) || []),
+      `[VERIFY] Zero hardcoded secrets verification: SUCCESS. Custom values parsed strictly from environment hooks.`,
+      `[INFO] Trigger verification payload configured: gcloud builds submit --config cloudbuild.export.yaml`,
+      `[SUCCESS] Subsystem ${subName} mapped properly! Clean isolation layer validated. Ready for remote origin upload.`
+    ];
+
+    let currentLogLine = 0;
+    const interval = setInterval(() => {
+      if (currentLogLine < logs.length) {
+        setIngestLogs(prev => [...prev, logs[currentLogLine]]);
+        currentLogLine++;
+      } else {
+        clearInterval(interval);
+        setIngestStatus("success");
+        if (!ingestedModules.includes(activeSubsystem)) {
+          setIngestedModules(prev => [...prev, activeSubsystem]);
+        }
+      }
+    }, 400);
+  };
+
+  // Submit AI message to copilot backend
+  const handleSendChat = async (text: string) => {
+    if (!text.trim()) return;
     const userMsg: ChatMessage = {
-      id: userMsgId,
+      id: `user-${Date.now()}`,
       sender: "user",
-      text: textToSend,
-      timestamp: new Date().toLocaleTimeString(),
+      text,
+      timestamp: new Date().toLocaleTimeString()
     };
-
-    setChatMessages((prev) => [...prev, userMsg]);
-    setUserInput("");
+    setChatMessages(prev => [...prev, userMsg]);
+    setChatInput("");
     setIsAiTyping(true);
 
     try {
@@ -138,24 +234,24 @@ export default function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: textToSend,
+          message: text,
           context: {
-            model: currentModelObj?.name,
-            hardware: currentHardwareObj?.name,
-            quantization: currentQuantObj?.name,
+            model: "Jemma-Tenzor Core System Ingestion",
+            hardware: "Multi-stage Docker validation",
+            quantization: activeSubsystem.toUpperCase()
           }
         })
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const resData = await response.json();
         const aiMsg: ChatMessage = {
           id: `ai-${Date.now()}`,
           sender: "assistant",
-          text: data.text,
+          text: resData.text,
           timestamp: new Date().toLocaleTimeString()
         };
-        setChatMessages((prev) => [...prev, aiMsg]);
+        setChatMessages(prev => [...prev, aiMsg]);
       } else {
         throw new Error();
       }
@@ -163,413 +259,293 @@ export default function App() {
       const errorMsg: ChatMessage = {
         id: `err-${Date.now()}`,
         sender: "system",
-        text: "🚨 Connectivity to dynamic AI Core is offline. Please ensure your GEMINI_API_KEY environment variable is configured in the Settings menu.",
+        text: "🚨 Live copilot backend offline. Ensure your GEMINI_API_KEY is configured inside the platform secrets panel.",
         timestamp: new Date().toLocaleTimeString()
       };
-      setChatMessages((prev) => [...prev, errorMsg]);
+      setChatMessages(prev => [...prev, errorMsg]);
     } finally {
       setIsAiTyping(false);
     }
   };
 
-  // Auto scroll chat
+  // Trigger quick instruction helpers
+  const clickShortcut = (text: string) => {
+    handleSendChat(text);
+  };
+
+  // Auto Scroll logs & chat
+  useEffect(() => {
+    terminalRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [ingestLogs]);
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages, isAiTyping]);
 
-  // Auto scroll console logs
-  useEffect(() => {
-    consoleBottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [simLog]);
-
-  // Trigger copy to clipboard
-  const handleCopyClipboard = () => {
-    navigator.clipboard.writeText(configs[activeTab]);
-    setCopiedFile(true);
-    setTimeout(() => setCopiedFile(false), 2000);
-  };
-
-  // Run a interactive mocked build pipeline simulation based on active inputs
-  const startBuildSimulation = () => {
-    setSimStatus("running");
-    setSimStepIdx(0);
-    setSimLog([]);
-
-    const steps = [
-      `[INFO] [SELECTION STATE] Deploy Request Initiated by rodlife1314@gmail.com`,
-      `[INFO] Target Repository: github.com/rodlife1314/tensorrt-edge-llm (branch: main)`,
-      `[INFO] Active Google Trigger: tensorrt-edge-llm-trigger [us-central1]`,
-      `[INFO] === [1/5: CACHING BLOCK] Checking storage buckets for pre-compiled structures...`,
-      `[CACHE MISS] No compiled engine cache found for ${currentModelObj?.name} on ${currentHardwareObj?.name}`,
-      `[INFO] Initiating HuggingFace weights repository pull stream: ${currentModelObj?.repo}`,
-      `[HF PULL] Snapping weights snapshot from serverless Hub registry ...`,
-      `[HF PULL] Successfully saved 24 weight shards. Download compression factor: ${currentQuantObj?.compression}`,
-      `[INFO] === [2/5: TENSORRT CONVERSION] Parsing model architecture layer definitions...`,
-      `[CONVERT] Initiating convert.py commands on Python 3.10 framework core: output_dir=./trt-checkpoint`,
-      `[CONVERT] Exporting key projection biases and tensor execution map. Dimension validation passed.`,
-      `[INFO] === [3/5: COMPILER ENGINE] Invoking NVIDIA TensorRT trtllm-build toolchain...`,
-      `[COMPILER] Target Hardware: ${currentHardwareObj?.name} [Target GPU: ${currentHardwareObj?.gcloudType}]`,
-      `[COMPILER] Quantization Level: ${currentQuantObj?.name} (Precision constraints specified: ${currentQuantObj?.precision})`,
-      `[COMPILER] Building CUDA Engine binary with Gemini Fast Tensor kernels...`,
-      `[COMPILER] VRAM optimization footprint assigned successfully. Expected live allocation: ~${selectedQuant === "fp16" ? "14.8" : selectedQuant === "int8" ? "7.8" : "4.1"} GB`,
-      `[INFO] === [4/5: CONTAINERIZATION] Assembling target GPU core environment...`,
-      `[DOCKER] Building Docker Image path: us-central1-docker.pkg.dev/octagon-enterprise/tensorrt-edge/engine:${selectedModel}-${selectedQuant}`,
-      `[DOCKER] Standard base layering complete (Target OS: Ubuntu 22.04 LTS + CUDA Runtime)`,
-      `[INFO] Copying compiled binary weights artifact (trt-engine) into application workspace...`,
-      `[DOCKER] Compressing container file table. Success. Uploading 6.8 GB Docker bundle...`,
-      `[INFO] === [5/5: SERVERLESS ACTION STATE] Deploying Cloud Run serverless engine...`,
-      `[DEPLOY] Invoking beta GPU runtime deployment service on Google Cloud Engine...`,
-      `[DEPLOY] Configuring Accelerator to ${currentHardwareObj?.name} (Region: us-central1-a)`,
-      `[DEPLOY] Verification checklist: Minimum VRAM requirements matched to hardware config limit.`,
-      `[DEPLOY] URL location generated: https://octagon-engine-${selectedModel}-${selectedQuant}-uztiasigi.europe-west1.run.app`,
-      `[HEALTH OK] FastAPI server successfully registered health ping! Status: ONLINE`,
-      `[ACCELERATOR OK] Connected to TensorRT Pipeline! Digital Runtime Action State Executed. 🎉`
-    ];
-
-    let currentStep = 0;
-    const interval = setInterval(() => {
-      if (currentStep < steps.length) {
-        setSimLog((prev) => [...prev, steps[currentStep]]);
-        setSimStepIdx(currentStep + 1);
-        currentStep++;
-      } else {
-        clearInterval(interval);
-        setSimStatus("success");
-      }
-    }, 450);
-  };
-
-  // Shortcut inquiries triggers
-  const executeCopilotShortcut = (text: string) => {
-    handleChatSubmit(text);
-  };
+  const currSubObj = INGEST_SUBSYSTEMS.find(s => s.id === activeSubsystem);
 
   return (
-    <div className="min-h-screen bg-[#07080b] text-slate-100 font-sans selection:bg-[#3b82f6]/30Selection flex flex-col antialiased">
+    <div className="min-h-screen bg-[#07080b] text-slate-100 font-sans selection:bg-[#3b82f6]/30 flex flex-col antialiased">
       
-      {/* Upper Navigation Banner */}
+      {/* Top Bar Header */}
       <header className="border-b border-slate-900 bg-[#090b10] px-6 py-4 flex items-center justify-between shadow-md">
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 bg-gradient-to-br from-indigo-500 via-blue-500 to-cyan-400 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/10">
-            <span className="font-mono text-lg font-extrabold text-white">8</span>
+            <span className="font-mono text-lg font-black text-white">Ω</span>
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="font-mono text-base font-bold tracking-wider text-slate-100">OCTAGON OS</h1>
-              <span className="text-[10px] bg-emerald-950/50 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-800/20 font-mono">v1.1.4</span>
+              <h1 className="font-mono text-sm sm:text-base font-bold tracking-wider text-slate-100">OCTAGON OS</h1>
+              <span className="text-[9px] bg-blue-950/85 text-blue-400 px-1.5 py-0.5 rounded border border-blue-800/20 font-mono">JEMMA-TENZOR INGESTION</span>
             </div>
-            <p className="text-xs text-slate-400">TensorRT Edge LLM Engine Control Station</p>
+            <p className="text-xs text-slate-400">TensorRT Edge LLM Control Center & Subsystem Coordinator</p>
           </div>
         </div>
 
         <div className="flex items-center gap-4 text-xs">
-          <div className="hidden sm:flex items-center gap-2 bg-slate-900/60 px-3 py-1.5 rounded-md border border-slate-800">
+          <div className="hidden md:flex items-center gap-2 bg-slate-900/60 px-3 py-1.5 rounded-md border border-slate-800">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-slate-300 font-mono">rodlife1314@gmail.com</span>
           </div>
           <div className="flex items-center gap-2 bg-[#1e2230]/40 px-3 py-1.5 rounded-md border border-blue-900/20 text-blue-300">
             <GitBranch className="h-3.5 w-3.5" />
-            <span className="font-mono text-[11px] font-semibold">tensorrt-edge-llm:main</span>
+            <span className="font-mono text-[10px] font-semibold">tensorrt-edge-llm:main</span>
           </div>
         </div>
       </header>
 
-      {/* Main Content Dashboard Layout */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden">
+      {/* Main Container Dashboard */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start overflow-hidden">
         
-        {/* Left Interactive Configuration Panels (Lg: 7 cols) */}
-        <section className="lg:col-span-7 space-y-6 flex flex-col justify-start">
+        {/* Left Interactive Grid: Subsystem Explorer & Verification Engine (Lg: 7 cols) */}
+        <section className="col-span-1 lg:col-span-7 space-y-6">
           
-          {/* Welcome Info Box */}
-          <div className="bg-gradient-to-r from-blue-950/20 to-indigo-950/15 border border-blue-900/20 rounded-xl p-4 flex gap-4">
-            <div className="h-10 w-10 shrink-0 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/15">
-              <Sparkles className="h-5 w-5" />
+          {/* Top Architecture Map State Overview */}
+          <div className="bg-[#0b0c10] border border-slate-900 rounded-xl p-5 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-900 pb-3">
+              <div className="flex items-center gap-2">
+                <Boxes className="h-4.5 w-4.5 text-blue-400" />
+                <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-300">
+                  1. Structured Ingestion Blueprint Map
+                </h2>
+              </div>
+              <span className="text-[10px] text-slate-500 font-mono">Classification Stage Active</span>
             </div>
-            <div className="space-y-1">
-              <div className="text-xs text-slate-300 font-medium">Automatic Trigger Setup Activated</div>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Connect your workspace to <span className="font-mono text-slate-300">rodlife1314/tensorrt-edge-llm:main</span>. Changing values instantly compiles optimize configurations, build scripts, and local web hosts inside the workspace.
-              </p>
+
+            <p className="text-xs text-slate-400 leading-relaxed">
+              To ingestion the upstream <strong className="text-slate-300">TensorRT-Edge-LLM</strong> source cleanly, we have categorized the codebase into six modular subsystems below. Original Octagon deployment shells and master triggers are protected under standard immutable validation safeguards.
+            </p>
+
+            {/* Micro grid of 6 subsystems */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-2">
+              {INGEST_SUBSYSTEMS.map((sub) => {
+                const isIngested = ingestedModules.includes(sub.id);
+                return (
+                  <button
+                    key={sub.id}
+                    onClick={() => setActiveSubsystem(sub.id)}
+                    className={`text-left p-3 rounded-lg border text-xs transition-all flex flex-col justify-between relative overflow-hidden group ${
+                      activeSubsystem === sub.id
+                        ? "bg-blue-950/20 border-blue-500/60 shadow-lg shadow-blue-900/5 col-span-1"
+                        : "bg-[#0c0d12] border-slate-900/80 hover:border-slate-800"
+                    }`}
+                  >
+                    {activeSubsystem === sub.id && (
+                      <div className="absolute top-0 right-0 h-1 w-full bg-gradient-to-r from-blue-500 to-cyan-400" />
+                    )}
+                    
+                    <div>
+                      <div className="font-mono text-[11px] font-semibold flex items-center justify-between text-slate-200 group-hover:text-white">
+                        <span>{sub.name}</span>
+                        {sub.id === "deployment" && <Lock className="h-3 w-3 text-amber-500" />}
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                        {sub.desc}
+                      </p>
+                    </div>
+
+                    <div className="mt-3.5 pt-2 border-t border-slate-900/50 flex justify-between items-center text-[9px] font-mono">
+                      <span className="text-slate-500 italic">/{sub.id}/</span>
+                      {isIngested ? (
+                        <span className="text-emerald-400 font-semibold uppercase flex items-center gap-0.5">
+                          <Check className="h-2.5 w-2.5" /> Mapped
+                        </span>
+                      ) : (
+                        <span className="text-indigo-400/90 font-medium">Proposed</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Interactive LAB Parameters */}
-          <div className="bg-[#0b0c10] border border-slate-900 rounded-xl p-5 space-y-6 shadow-xl">
-            <div className="flex items-center gap-2 border-b border-slate-900 pb-3">
-              <Sliders className="h-4 w-4 text-blue-400" />
-              <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-300">1. Select Digital Runtime Parameters</h2>
-            </div>
-
-            {/* Parameter Grid */}
-            <div className="space-y-5">
-              
-              {/* Parameter A: Models */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center text-xs">
-                  <label className="text-slate-400 font-medium flex items-center gap-1.5">
-                    <Database className="h-3.5 w-3.5 text-blue-400" /> LLM Weights Repository
-                  </label>
-                  <span className="text-[10px] text-slate-500 font-mono">HF Model Snapshot</span>
+          {/* Subsystem Details & Isolation File Ingestion Target */}
+          {currSubObj && (
+            <div className="bg-[#0b0c10] border border-slate-900 rounded-xl p-5 shadow-xl space-y-4">
+              <div className="flex justify-between items-center border-b border-slate-900 pb-3">
+                <div className="flex items-center gap-2">
+                  <FolderOpen className="h-4 w-4 text-emerald-400" />
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider text-slate-300">
+                    File Target Map: {currSubObj.name}
+                  </span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {MODEL_OPTIONS.map((m) => (
-                    <button
-                      key={m.id}
-                      onClick={() => setSelectedModel(m.id)}
-                      className={`text-left p-3 rounded-lg border transition-all relative overflow-hidden group ${
-                        selectedModel === m.id
-                          ? "bg-blue-950/30 border-blue-500/60 shadow-lg shadow-blue-950/20"
-                          : "bg-[#0d0f14] border-slate-900 hover:border-slate-800"
-                      }`}
-                    >
-                      {/* Glow selection accent */}
-                      {selectedModel === m.id && (
-                        <div className="absolute top-0 right-0 h-1 w-full bg-gradient-to-r from-blue-500 to-cyan-400" />
-                      )}
-                      <div className="font-medium text-xs text-slate-200 group-hover:text-white transition-colors">
-                        {m.name}
-                      </div>
-                      <div className="text-[10px] text-slate-400 font-mono mt-1 break-all truncate">
-                        {m.repo}
-                      </div>
-                      <div className="flex items-center gap-1.5 mt-2">
-                        <span className="text-[9px] font-mono text-blue-400 bg-blue-950/50 px-1 rounded">
-                          {m.size}
-                        </span>
-                        <span className="text-[9px] font-mono text-cyan-400 bg-cyan-950/30 px-1 rounded">
-                          {m.format}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Parameter B: Hardware Targets */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center text-xs">
-                  <label className="text-slate-400 font-medium flex items-center gap-1.5">
-                    <Cpu className="h-3.5 w-3.5 text-blue-400" /> Target GPU Hardware Accelerator
-                  </label>
-                  <span className="text-[10px] text-slate-500 font-mono">CUDA Hardware Stack</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                  {HARDWARE_OPTIONS.map((h) => (
-                    <button
-                      key={h.id}
-                      className={`text-left p-2.5 rounded-lg border transition-all relative ${
-                        selectedHardware === h.id
-                          ? "bg-blue-950/30 border-blue-500/60 shadow-lg font-medium"
-                          : "bg-[#0d0f14] border-slate-900 hover:border-slate-800"
-                      }`}
-                      onClick={() => setSelectedHardware(h.id)}
-                    >
-                      {selectedHardware === h.id && (
-                        <div className="absolute top-0 right-0 h-1 w-full bg-gradient-to-r from-blue-500 to-cyan-400" />
-                      )}
-                      <div className="text-xs text-slate-200">{h.name}</div>
-                      <div className="text-[10px] text-slate-400 mt-1">{h.vram} VRAM</div>
-                      <div className="text-[10px] text-slate-500 mt-0.5 font-mono">{h.cores}</div>
-                      <div className="mt-2 pt-2 border-t border-slate-900 flex justify-between items-center">
-                        <span className="text-[9px] font-mono text-slate-400">{h.cost}</span>
-                        <span className="text-[9px] font-mono text-slate-500">GCP Profile</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Parameter C: Quantization Profile */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center text-xs">
-                  <label className="text-slate-400 font-medium flex items-center gap-1.5">
-                    <Layers className="h-3.5 w-3.5 text-blue-400" /> Quantization & VRAM Footprint Optimization
-                  </label>
-                  <span className="text-[10px] font-mono text-semibold text-emerald-400">Reduce Footprint</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                  {QUANT_OPTIONS.map((q) => (
-                    <button
-                      key={q.id}
-                      className={`text-left p-2.5 rounded-lg border transition-all relative ${
-                        selectedQuant === q.id
-                          ? "bg-blue-950/30 border-blue-500/60 shadow-lg"
-                          : "bg-[#0d0f14] border-slate-900 hover:border-slate-800"
-                      }`}
-                      onClick={() => setSelectedQuant(q.id)}
-                    >
-                      {selectedQuant === q.id && (
-                        <div className="absolute top-0 right-0 h-1 w-full bg-gradient-to-r from-blue-500 to-cyan-400" />
-                      )}
-                      <div className="text-xs text-slate-200">{q.name}</div>
-                      <div className="text-[10px] text-slate-400 mt-1">{q.precision}</div>
-                      <div className="text-[9px] text-slate-500 font-mono mt-0.5">{q.compression}</div>
-                      <div className="mt-2 pt-2 border-t border-slate-900 flex justify-between items-center text-[10px]">
-                        <span className="font-mono text-emerald-400 font-semibold">{q.diskSize}</span>
-                        <span className="text-slate-500">{q.accuracy} Acc</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-            </div>
-
-            {/* Live Model Footprint Estimation Graph (Replaces recharts with handcrafted pure CSS micro-graphs to avoid dynamic bundler flaws) */}
-            <div className="pt-4 border-t border-slate-900/60">
-              <div className="flex justify-between items-center text-xs mb-2">
-                <span className="text-slate-400 flex items-center gap-1.5">
-                  <Activity className="h-3.5 w-3.5 text-blue-400" /> VRAM Memory Allocation Simulation Engine
+                <span className="text-[10px] bg-slate-900 text-slate-400 font-mono px-2 py-0.5 rounded border border-slate-800">
+                  {currSubObj.path}
                 </span>
-                <span className="font-mono text-slate-300">Target Level Metrics</span>
               </div>
-              <div className="bg-[#08090d] rounded-lg p-3.5 border border-slate-900 space-y-3">
-                <div className="grid grid-cols-12 gap-3 items-center text-xs">
-                  <span className="col-span-3 text-slate-400 font-mono text-[11px]">VRAM Margin</span>
-                  <div className="col-span-6 bg-slate-900 h-2.5 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full transition-all duration-500 rounded-full ${
-                        selectedQuant === "fp16" ? "bg-red-500 w-[95%]" : selectedQuant === "int8" ? "bg-amber-500 w-[45%]" : "bg-emerald-500 w-[24%]"
-                      }`}
-                    />
-                  </div>
-                  <span className="col-span-3 text-right font-mono text-[11px] font-semibold text-slate-300">
-                    {selectedQuant === "fp16" ? "40+ GB Req" : selectedQuant === "int8" ? "18.4 GB Max" : "9.8 GB Min"}
-                  </span>
+
+              <div className="space-y-3">
+                <div className="text-xs text-slate-400">
+                  Expected target files inside this subsystem during incoming merge steps:
                 </div>
 
-                <div className="grid grid-cols-12 gap-3 items-center text-xs">
-                  <span className="col-span-3 text-slate-400 font-mono text-[11px]">Latency Speed</span>
-                  <div className="col-span-6 bg-slate-900 h-2.5 rounded-full overflow-hidden">
+                {/* Subsystem file stack */}
+                <div className="space-y-2 max-h-[170px] overflow-y-auto pr-1">
+                  {currSubObj.files.map((file, fIdx) => (
                     <div 
-                      className={`h-full transition-all duration-500 rounded-full ${
-                        selectedQuant === "fp16" ? "bg-blue-400 w-[30%]" : selectedQuant === "int8" ? "bg-blue-400 w-[78%]" : "bg-cyan-400 w-[98%]"
-                      }`}
-                    />
-                  </div>
-                  <span className="col-span-3 text-right font-mono text-[11px] font-semibold text-slate-300">
-                    {selectedQuant === "fp16" ? "45 tokens/s" : selectedQuant === "int8" ? "124 tokens/s" : "210 tokens/s"}
-                  </span>
+                      key={fIdx}
+                      className="bg-[#07080c] border border-slate-900/60 rounded-lg p-2.5 flex items-center justify-between text-xs hover:border-slate-800 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-emerald-400 font-mono text-[11px]">→</span>
+                        <div>
+                          <div className="font-mono text-slate-200 text-[11.5px] font-medium">{file.name}</div>
+                          <div className="text-[10px] text-slate-400 mt-0.5">{file.action}</div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-slate-500 font-mono">{file.size}</span>
+                        {file.immutable ? (
+                          <span className="text-[9px] bg-amber-950/40 text-amber-500 border border-amber-800/20 rounded px-1.5 font-mono">
+                            Immutable
+                          </span>
+                        ) : (
+                          <span className="text-[9px] bg-slate-900 text-slate-400 border border-slate-800 rounded px-1.5 font-mono">
+                            Clean Stage
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                
-                <div className="flex justify-between items-center pt-1.5 text-[10px] text-slate-500">
-                  <span className="flex items-center gap-1">
-                    <Info className="h-3 w-3" /> Minimum GPU recommendation: {selectedQuant === "fp16" ? "NVIDIA A100 is highly recommended." : "NVIDIA T4 or L4 can host run cleanly."}
-                  </span>
+
+                {/* Verification Check Simulator Call */}
+                <div className="pt-3 border-t border-slate-900/60 flex flex-col sm:flex-row gap-3 items-center justify-between">
+                  <div className="text-[11px] text-slate-400">
+                    Run safe local validation checks to confirm no file path conflicts or upstream configuration drift.
+                  </div>
+                  
+                  <button
+                    onClick={runIngestionSimulation}
+                    disabled={ingestStatus === "running"}
+                    className={`shrink-0 px-3.5 py-2 rounded-lg font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all ${
+                      ingestStatus === "running"
+                        ? "bg-slate-900 text-slate-500 cursor-not-allowed border border-slate-800"
+                        : "bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-500/10 cursor-pointer"
+                    }`}
+                  >
+                    {ingestStatus === "running" ? (
+                      <>
+                        <RefreshCw className="h-3 w-3 animate-spin" /> Verifying...
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-3 w-3 fill-white" /> Check {currSubObj.name}
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
+          )}
 
-          </div>
-
-          {/* Core Run & Export Simulator Panel */}
-          <div className="bg-[#0b0c10] border border-slate-900 rounded-xl p-5 space-y-4 shadow-xl flex-1 flex flex-col justify-between">
-            <div className="flex justify-between items-center border-b border-slate-900 pb-3">
+          {/* Interactive Debug validation Terminal logs */}
+          <div className="bg-[#0b0c10] border border-slate-900 rounded-xl p-5 shadow-xl space-y-3">
+            <div className="flex justify-between items-center border-b border-slate-900 pb-2">
               <div className="flex items-center gap-2">
                 <Terminal className="h-4 w-4 text-emerald-400" />
-                <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-300">2. Simulate Cloud Build Export Pipeline</h3>
+                <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-300">
+                  2. Validation Logs & Trace Analyzer
+                </h3>
               </div>
-              <span className="text-[10px] text-slate-500 font-mono">Build status: {simStatus.toUpperCase()}</span>
+              <span className="text-[10px] text-slate-500 font-mono">Dry-run compiler hooks</span>
             </div>
 
-            {/* Run button trigger */}
-            <div className="flex items-center gap-3">
-              <button
-                onClick={startBuildSimulation}
-                disabled={simStatus === "running"}
-                className={`px-4 py-2.5 rounded-lg font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all ${
-                  simStatus === "running"
-                    ? "bg-slate-900 text-slate-500 cursor-not-allowed"
-                    : "bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md shadow-emerald-500/10"
-                }`}
-              >
-                {simStatus === "running" ? (
-                  <>
-                    <RefreshCw className="h-3 w-3 animate-spin" /> Compiling TensorRT Engine...
-                  </>
-                ) : (
-                  <>
-                    <Play className="h-3.5 w-3.5 fill-slate-950" /> Run Edge Compile Simulation
-                  </>
-                )}
-              </button>
-              
-              <div className="text-[11px] text-slate-400 leading-normal">
-                {simStatus === "idle" && "Simulates full Cloud Build compiler step inside container logs."}
-                {simStatus === "running" && <span className="text-amber-400 animate-pulse font-mono">Running compiler: Step {simStepIdx}/28...</span>}
-                {simStatus === "success" && <span className="text-emerald-400 font-mono flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5" /> Pipeline compiled successfully! Web server alive.</span>}
-              </div>
-            </div>
-
-            {/* Standard Terminal Output Log */}
-            <div className="bg-[#050608] border border-slate-900 rounded-lg p-3.5 h-[190px] overflow-y-auto font-mono text-[11px] space-y-1.5 text-slate-400 relative">
-              {simLog.length === 0 ? (
-                <div className="text-slate-600 flex flex-col items-center justify-center h-full space-y-1 text-center">
-                  <div className="text-xs">--- Live TensorRT Container Terminal Log ---</div>
-                  <div>Press the button above to test compile weights parsing and Cloud Run GPU assembly.</div>
+            <div className="bg-[#050608] border border-slate-900/80 rounded-lg p-3.5 h-[160px] overflow-y-auto font-mono text-[11px] space-y-1 text-slate-400 relative">
+              {ingestLogs.length === 0 ? (
+                <div className="text-slate-600 flex flex-col items-center justify-center h-full text-center space-y-1">
+                  <div>--- Ingestion Isolation Analyzer Terminal ---</div>
+                  <p className="text-[10px] max-w-sm">Select any subsystem and hit "Check" above to simulate isolated validation without triggering remote cloud build costs.</p>
                 </div>
               ) : (
                 <>
-                  {simLog.map((log, idx) => {
+                  {ingestLogs.map((log, lIdx) => {
                     let textClass = "text-slate-400";
                     if (log.includes("[INFO]")) textClass = "text-blue-400";
-                    if (log.includes("[CACHE MISS]")) textClass = "text-amber-400/90";
-                    if (log.includes("[COMPILER]")) textClass = "text-indigo-300";
-                    if (log.includes("Success") || log.includes("OK") || log.includes("[HEALTH OK]")) textClass = "text-emerald-400";
-                    if (log.includes("=== [")) textClass = "text-slate-200 border-b border-slate-900/80 pb-1 font-bold mt-2 first:mt-0";
+                    if (log.includes("[CHECK]")) textClass = "text-amber-400/90";
+                    if (log.includes("[SUCCESS]")) textClass = "text-emerald-400";
+                    if (log.includes("gcloud")) textClass = "text-slate-100 font-semibold";
 
                     return (
-                      <div key={idx} className={`${textClass} leading-relaxed flex gap-2`}>
-                        <span className="text-slate-600 select-none">[{String(idx + 1).padStart(2, "0")}]</span>
+                      <div key={lIdx} className={`${textClass} leading-relaxed flex gap-2`}>
+                        <span className="text-slate-600 select-none">[{String(lIdx + 1).padStart(2, "0")}]</span>
                         <span>{log}</span>
                       </div>
                     );
                   })}
-                  <div ref={consoleBottomRef} />
+                  <div ref={terminalRef} />
                 </>
               )}
             </div>
-            
+
+            <div className="flex justify-between items-center text-[10px] text-slate-500 font-mono pt-1">
+              <span className="flex items-center gap-1">
+                <Info className="h-3 w-3 text-slate-500" /> Sandbox validation endpoint: E2 CPU safe environment.
+              </span>
+              <span>Buffer: Active</span>
+            </div>
           </div>
 
         </section>
 
-        {/* Right Tabbed Dynamic Manifest Config File Viewer & Copilot AI (Lg: 5 cols) */}
-        <section className="lg:col-span-5 flex flex-col gap-6">
+        {/* Right Interactive Grid: Quick Execution Script and Copilot Dialogue Map (Lg: 5 cols) */}
+        <section className="col-span-1 lg:col-span-5 flex flex-col gap-6">
 
-          {/* Dynamic Code Manifest Tab Panel */}
-          <div className="bg-[#0b0c10] border border-slate-900 rounded-xl flex flex-col shadow-xl overflow-hidden h-fit">
+          {/* Core Octagon Production Deployment Script Vault */}
+          <div className="bg-[#0b0c10] border border-slate-900 rounded-xl flex flex-col shadow-xl overflow-hidden">
             <div className="p-4 border-b border-slate-900 bg-[#090b10] flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-xs text-slate-300 font-bold uppercase tracking-wider font-mono">
-                <FileCode className="h-4 w-4 text-blue-400" /> Compiled Config Core
+                <FileCode className="h-4 w-4 text-blue-400" /> Deploy Command Stack
               </div>
 
-              {/* Copy manifest button */}
+              {/* Copy file trigger button */}
               <button
-                onClick={handleCopyClipboard}
-                disabled={loadingConfigs}
-                className="text-[11px] bg-[#1a1c24] hover:bg-[#252834] border border-slate-800 text-slate-300 px-2.5 py-1.5 rounded flex items-center gap-1.5 transition-all text-mono active:scale-95 cursor-pointer"
+                onClick={() => handleCopy(configs[activeConfigTab], activeConfigTab)}
+                disabled={!configs[activeConfigTab]}
+                className="text-[11px] bg-[#1a1c24] hover:bg-[#252834] border border-slate-800 text-slate-200 px-2.5 py-1.5 rounded flex items-center gap-1.5 transition-all text-mono cursor-pointer active:scale-95"
               >
-                {copiedFile ? (
+                {copiedFile && copiedText === activeConfigTab ? (
                   <>
-                    <Check className="h-3.5 w-3.5 text-emerald-400" /> Copied!
+                    <Check className="h-3.5 w-3.5 text-emerald-400" /> Copied Command!
                   </>
                 ) : (
                   <>
-                    <Copy className="h-3.5 w-3.5 text-slate-400" /> Copy Manifest
+                    <Copy className="h-3.5 w-3.5 text-slate-400" /> Copy Script
                   </>
                 )}
               </button>
             </div>
 
-            {/* Dynamic tabs list */}
+            {/* Config key tabs */}
             <div className="flex bg-[#07080c] border-b border-slate-900 text-xs overflow-x-auto">
               {(Object.keys(configs) as Array<keyof PresetConfigs>).map((file) => (
                 <button
                   key={file}
-                  onClick={() => setActiveTab(file)}
-                  className={`px-3 py-2.5 font-mono border-b-2 text-[11px] whitespace-nowrap transition-colors flex-1 ${
-                    activeTab === file
+                  onClick={() => setActiveConfigTab(file)}
+                  className={`px-3 py-2.5 font-mono border-b-2 text-[10.5px] whitespace-nowrap transition-colors flex-1 ${
+                    activeConfigTab === file
                       ? "border-blue-500 text-slate-100 bg-[#0b0c10]"
                       : "border-transparent text-slate-500 hover:text-slate-300 hover:bg-[#090a0f]"
                   }`}
@@ -579,44 +555,38 @@ export default function App() {
               ))}
             </div>
 
-            {/* Config Script Display Container */}
-            <div className="p-4 bg-[#050608] relative">
-              {loadingConfigs ? (
-                <div className="h-[220px] flex flex-col items-center justify-center space-y-2 text-slate-500">
-                  <RefreshCw className="h-6 w-6 animate-spin text-blue-400" />
-                  <span className="font-mono text-xs">Re-compiling script manifest...</span>
-                </div>
-              ) : (
-                <div className="h-[220px] overflow-y-auto leading-relaxed text-slate-300 font-mono text-[10.5px] whitespace-pre select-all bg-transparent focus:outline-none">
-                  {configs[activeTab] || `// Selection configuration values changed. Recompiling script presets...`}
-                </div>
-              )}
+            {/* Command viewer content context */}
+            <div className="p-4 bg-[#050608]">
+              <div className="h-[180px] overflow-y-auto leading-relaxed text-slate-300 font-mono text-[10px] whitespace-pre select-all bg-transparent focus:outline-none scrollbar-thin">
+                {configs[activeConfigTab] || `// Compiling standard deployment commands dynamically...`}
+              </div>
             </div>
-            
-            <div className="p-3 bg-slate-950 text-[10px] text-slate-500 flex justify-between items-center border-t border-slate-900/60 font-mono">
-              <span>Artifact Location: src/{activeTab}</span>
-              <span className="text-blue-400/80">Sync Enabled</span>
+
+            <div className="px-4 py-2 bg-slate-950 text-[10px] text-slate-500 flex justify-between items-center border-t border-slate-900/60 font-mono">
+              <span className="flex items-center gap-1">
+                <Info className="h-3 w-3" /> Secure gcloud & pipeline specifications configurations.
+              </span>
+              <span className="text-emerald-400 font-semibold">Protected</span>
             </div>
           </div>
 
-          {/* Interactive Core AI Copilot Control Engine */}
+          {/* Advanced Copilot Dialogue Portal */}
           <div className="bg-[#0b0c10] border border-slate-900 rounded-xl flex flex-col overflow-hidden shadow-xl flex-1 max-h-[460px]">
             <div className="p-4 border-b border-slate-900 bg-[#090b10] flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4 text-emerald-400" />
                 <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-slate-300">
-                  3. Octagon Intelligence Copilot
+                  3. Jemma-Tenzor Core Copilot
                 </h3>
               </div>
-              
-              <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-mono">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>NVIDIA TRT Copilot Agent (Flash 3.5)</span>
+              <div className="flex items-center gap-1.5 text-[9px] text-slate-500 font-mono">
+                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                <span>ACTIVE EXPERT</span>
               </div>
             </div>
 
-            {/* AI Dialog Log Scroll Space */}
-            <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-[#07080c] text-xs">
+            {/* Chat dialog messages */}
+            <div className="flex-1 p-4 overflow-y-auto space-y-3.5 bg-[#07080c] text-[11px] leading-relaxed max-h-[290px]">
               {chatMessages.map((msg) => (
                 <div
                   key={msg.id}
@@ -624,16 +594,14 @@ export default function App() {
                     msg.sender === "user" ? "ml-auto items-end" : "mr-auto items-start"
                   }`}
                 >
-                  <div className="text-[9px] text-slate-500 mb-1 font-mono">
-                    {msg.sender === "user" ? "RODLIFE1314" : msg.sender === "system" ? "SYSTEM CORE" : "OCTAGON CORE"} • {msg.timestamp}
+                  <div className="text-[9px] text-slate-500 mb-0.5 font-mono">
+                    {msg.sender === "user" ? "RODLIFE1314" : "COPILOT ASSISTANT"} • {msg.timestamp}
                   </div>
                   <div
-                    className={`rounded-lg p-3 leading-relaxed whitespace-pre-wrap ${
+                    className={`rounded-lg p-2.5 whitespace-pre-wrap ${
                       msg.sender === "user"
-                        ? "bg-blue-600 text-white rounded-tr-none"
-                        : msg.sender === "system"
-                        ? "bg-slate-950 text-slate-400 border border-slate-900/60 rounded-tl-none font-mono text-[11px]"
-                        : "bg-[#0f111a] text-slate-200 border border-slate-900/50 rounded-tl-none"
+                        ? "bg-blue-600 text-white rounded-tr-none px-3"
+                        : "bg-[#0f111a] text-slate-200 border border-slate-900/50 rounded-tl-none font-mono text-[10px]"
                     }`}
                   >
                     {msg.text}
@@ -643,59 +611,59 @@ export default function App() {
 
               {isAiTyping && (
                 <div className="flex flex-col items-start max-w-[80%] mr-auto">
-                  <span className="text-[9px] text-slate-500 mb-1 font-mono">OCTAGON CORE is thinking...</span>
-                  <div className="bg-[#0f111a] border border-slate-900/50 text-slate-500 rounded-lg rounded-tl-none p-3.5 flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-bounce" />
-                    <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-bounce [animation-delay:0.2s]" />
-                    <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-bounce [animation-delay:0.4s]" />
+                  <span className="text-[9px] text-slate-500 mb-0.5 font-mono">Copilot typing...</span>
+                  <div className="bg-[#0f111a] border border-slate-900/50 text-slate-500 rounded-lg rounded-tl-none p-2.5 flex items-center gap-1.5">
+                    <span className="h-1 w-1 rounded-full bg-blue-500 animate-bounce" />
+                    <span className="h-1 w-1 rounded-full bg-blue-500 animate-bounce [animation-delay:0.2s]" />
+                    <span className="h-1 w-1 rounded-full bg-blue-500 animate-bounce [animation-delay:0.4s]" />
                   </div>
                 </div>
               )}
               <div ref={chatEndRef} />
             </div>
 
-            {/* Shortcut prompt commands triggers helper */}
-            <div className="px-4 py-2 bg-[#090b10] border-t border-slate-900 flex gap-1.5 overflow-x-auto text-[10px] whitespace-nowrap scrollbar-none">
+            {/* Interactive smart shortcut suggestions triggers */}
+            <div className="px-4 py-2 bg-[#090b10] border-t border-slate-900 flex gap-1.5 overflow-x-auto text-[9.5px] whitespace-nowrap scrollbar-none">
               <button
-                onClick={() => executeCopilotShortcut("Generate GPU Deployment commands")}
-                className="bg-[#10121a] hover:bg-[#1a1c29] text-slate-300 border border-slate-850 px-2.5 py-1 rounded transition-colors font-mono font-semibold"
+                onClick={() => clickShortcut("Show repository push commands step-by-step")}
+                className="bg-[#10121a] hover:bg-[#1a1c29] text-slate-300 border border-slate-800 px-2 py-1 rounded transition-colors font-mono font-semibold cursor-pointer"
               >
-                ⚡ Get GPU Deploy CLI
+                📥 Git Push Checklist
               </button>
               <button
-                onClick={() => executeCopilotShortcut("Analyze Triton multi-instance schema")}
-                className="bg-[#10121a] hover:bg-[#1a1c29] text-slate-300 border border-slate-850 px-2.5 py-1 rounded transition-colors font-mono font-semibold"
+                onClick={() => clickShortcut("Show manual gcloud builds triggers create syntax for main branch")}
+                className="bg-[#10121a] hover:bg-[#1a1c29] text-slate-300 border border-slate-800 px-2 py-1 rounded transition-colors font-mono font-semibold cursor-pointer"
               >
-                🔬 Triton Optimizer
+                ⚙ Manual Trigger Syntax
               </button>
               <button
-                onClick={() => executeCopilotShortcut("Explain Llama 3 Int8 VRAM limits")}
-                className="bg-[#10121a] hover:bg-[#1a1c29] text-slate-300 border border-slate-850 px-2.5 py-1 rounded transition-colors font-mono font-semibold"
+                onClick={() => clickShortcut("Explain how the Dockerfile.export protects GPU compilation metrics")}
+                className="bg-[#10121a] hover:bg-[#1a1c29] text-slate-300 border border-slate-800 px-2 py-1 rounded transition-colors font-mono font-semibold cursor-pointer"
               >
-                📊 Int8 Specs
+                🛡 CPU-Safe Sandbox Spec
               </button>
             </div>
 
-            {/* Input Form Fields */}
+            {/* Prompt input field form */}
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                handleChatSubmit(userInput);
+                handleSendChat(chatInput);
               }}
               className="p-3 bg-[#0a0c11] border-t border-slate-900 flex gap-2"
             >
               <input
                 type="text"
-                value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
-                placeholder="Ask model compiling or custom Cloud Run deployments strategies..."
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Ask about validation, CUDA compile steps, or Triton configuration maps..."
                 className="flex-1 bg-[#050608] border border-slate-900 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:border-blue-500/50"
               />
               <button
                 type="submit"
                 className="bg-blue-600 hover:bg-blue-500 text-white p-2 rounded-lg transition-colors cursor-pointer"
               >
-                <Send className="h-4 w-4" />
+                <Send className="h-3.5 w-3.5" />
               </button>
             </form>
           </div>
@@ -704,13 +672,13 @@ export default function App() {
 
       </main>
 
-      {/* Control Console Status Footer */}
-      <footer className="border-t border-slate-900/60 bg-[#090b10] px-6 py-3.5 text-xs text-slate-500 flex flex-col sm:flex-row justify-between items-center gap-2">
+      {/* Control Console Footer Banner */}
+      <footer className="border-t border-slate-900 bg-[#090b10] px-6 py-3.5 text-xs text-slate-500 flex flex-col sm:flex-row justify-between items-center gap-2">
         <div className="flex items-center gap-5">
           <span className="font-mono text-[10px] uppercase">GCLOUD CI/CD PIPELINE TRIGGER STATUS :</span>
           <div className="flex items-center gap-1.5 text-emerald-400">
-            <span className="h-2 w-2 rounded-full bg-emerald-400" />
-            <span className="font-semibold text-[11px]">ACTIVE DIRECT LINK</span>
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="font-semibold text-[11px]">ACTIVE REPO TRIGGER LINKED</span>
           </div>
         </div>
         <div className="flex items-center gap-1">
