@@ -1,4 +1,8 @@
 --extra-index-url https://pypi.nvidia.com
+pip
+setuptools>=40.8.0
+wheel
+packaging
 tensorrt_llm==0.10.0
 fastapi
 uvicorn

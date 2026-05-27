@@ -46,7 +46,10 @@ RUN pip3 install --no-cache-dir --upgrade pip
 # Import pre-resolved binaries and execute local offline installation
 COPY --from=builder /build/wheels /tmp/wheels
 COPY requirements.txt /tmp/requirements.txt
-RUN pip3 install --no-cache-dir --no-index --find-links=/tmp/wheels -r /tmp/requirements.txt && \
+RUN pip3 install --no-cache-dir --no-index --find-links=/tmp/wheels \
+    pip setuptools wheel packaging && \
+    pip3 install --no-cache-dir --no-index --find-links=/tmp/wheels \
+    -r /tmp/requirements.txt && \
     rm -rf /tmp/wheels /tmp/requirements.txt
 
 WORKDIR /octagon-app
