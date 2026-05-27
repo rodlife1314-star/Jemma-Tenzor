@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ModelManifestSchema",
+  "type": "object",
+  "properties": {
+    "model_id": { "type": "string" },
+    "repo_tag": { "type": "string" },
+    "precision": { "type": "string", "enum": ["float16", "int8", "int4"] },
+    "vram_required_gb": { "type": "number" }
+  },
+  "required": ["model_id", "repo_tag", "precision"]
+}

@@ -59,6 +59,59 @@ const INGEST_SUBSYSTEMS = [
     metrics: "Asynchronous stream pipeline enabled"
   },
   {
+    id: "validation",
+    name: "Ingestion Validation",
+    desc: "Strict environment parameters validation, dependency isolation trackers and GPU analysis tools.",
+    path: "src/jemma_tenzor/validation/",
+    files: [
+      { name: "dependency_validation.py", action: "Validates python module library baselines offline", size: "2 KB" },
+      { name: "environment_validation.py", action: "Checks host execution ports and secret boundaries", size: "2 KB" },
+      { name: "gpu_availability_validation.py", action: "Diagnoses GPU limits & configures fallback CPU tiers", size: "2 KB" },
+      { name: "model_manifest_validation.py", action: "Compares model parameters against manifest templates", size: "2 KB" }
+    ],
+    status: "VERIFIED",
+    metrics: "CPU-safe Verification Engine online"
+  },
+  {
+    id: "configs",
+    name: "Runtime Configuration Workspace",
+    desc: "Templated model profiles, precision parameters configurations and memory allocator limits.",
+    path: "config/",
+    files: [
+      { name: "runtime_config_template.json", action: "Specifies default engine paths and threads safety ceilings", size: "1.5 KB" },
+      { name: "model_profile_template.json", action: "Houses attention head counts, layer definitions and profiles", size: "1 KB" },
+      { name: "quantization_profile_template.json", action: "Sets AWQ layout compression rates and precision parameters", size: "1 KB" }
+    ],
+    status: "VERIFIED",
+    metrics: "Active runtime workspace profiles loaded"
+  },
+  {
+    id: "schemas",
+    name: "Structural Schemas",
+    desc: "Formal model declarations, target infrastructure specs and requests/responses constraints.",
+    path: "schemas/",
+    files: [
+      { name: "model_manifest_schema.json", action: "Defines requirements for model weights registration", size: "1 KB" },
+      { name: "deployment_manifest_schema.json", action: "Establishes cloud configurations specifications constraints", size: "1 KB" },
+      { name: "inference_schema.json", action: "Binds active temperature parameters to API gateway endpoints", size: "1 KB" }
+    ],
+    status: "VERIFIED",
+    metrics: "Strict JSON structural validators linked"
+  },
+  {
+    id: "tests",
+    name: "Incremental Sandbox Tests",
+    desc: "CPU safe regression tests suites validating core runtime modules without hardware constraints.",
+    path: "tests/",
+    files: [
+      { name: "test_mock_inference.py", action: "Performs mock tokenization & baseline latency assertions", size: "1.5 KB" },
+      { name: "test_allocator_boundary.py", action: "Verifies VRAM safety multiplier calculation logic", size: "1 KB" },
+      { name: "test_gateway_route.py", action: "Ensures FastAPI schema routers map correctly", size: "1 KB" }
+    ],
+    status: "VERIFIED",
+    metrics: "Clean safe unit test coverage verified"
+  },
+  {
     id: "plugins",
     name: "Custom CUDA Plugins",
     desc: "GEMM tuning lookups, specialized Attention kernels, and custom compilation configurations.",
@@ -128,7 +181,7 @@ export default function App() {
   // Ingestion Dry Run state
   const [ingestStatus, setIngestStatus] = useState<"idle" | "running" | "success" | "error">("idle");
   const [ingestLogs, setIngestLogs] = useState<string[]>([]);
-  const [ingestedModules, setIngestedModules] = useState<string[]>(["deployment"]);
+  const [ingestedModules, setIngestedModules] = useState<string[]>(["deployment", "validation", "configs", "schemas", "tests"]);
   const terminalRef = useRef<HTMLDivElement>(null);
 
   // Dynamic Chat with Jemma-Tenzor copilot

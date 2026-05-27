@@ -1,0 +1,2 @@
+# Jemma-Tenzor core orchestration package
+__version__ = "0.10.0"

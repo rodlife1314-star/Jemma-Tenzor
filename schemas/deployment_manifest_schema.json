@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DeploymentManifestSchema",
+  "type": "object",
+  "properties": {
+    "service_name": { "type": "string" },
+    "gcp_project_id": { "type": "string" },
+    "region": { "type": "string" },
+    "gpu_type": { "type": "string", "enum": ["nvidia-t4", "nvidia-l4", "nvidia-a100"] },
+    "scale_to_zero": { "type": "boolean" }
+  },
+  "required": ["service_name", "region", "gpu_type"]
+}

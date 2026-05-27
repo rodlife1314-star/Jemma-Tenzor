@@ -1,0 +1,22 @@
+{
+  "quantization_profiles": {
+    "fp16": {
+      "dtype": "float16",
+      "use_weight_only": false,
+      "weight_only_precision": "none",
+      "compression_factor": 1.0
+    },
+    "int8": {
+      "dtype": "float16",
+      "use_weight_only": true,
+      "weight_only_precision": "int8",
+      "compression_factor": 0.5
+    },
+    "int4": {
+      "dtype": "float16",
+      "use_weight_only": true,
+      "weight_only_precision": "int4_awq",
+      "compression_factor": 0.27
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "model_profiles": {
+    "llama3-8b": {
+      "repo_tag": "meta-llama/Meta-Llama-3-8B-Instruct",
+      "hidden_size": 4096,
+      "num_attention_heads": 32,
+      "num_kv_heads": 8,
+      "num_hidden_layers": 32,
+      "vocab_size": 128256,
+      "max_position_embeddings": 8192
+    },
+    "gemma-2b": {
+      "repo_tag": "google/gemma-2b-it",
+      "hidden_size": 2048,
+      "num_attention_heads": 8,
+      "num_kv_heads": 1,
+      "num_hidden_layers": 18,
+      "vocab_size": 256000,
+      "max_position_embeddings": 8192
+    }
+  }
+}

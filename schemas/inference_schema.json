@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InferenceSchema",
+  "type": "object",
+  "properties": {
+    "prompt": { "type": "string", "minLength": 1 },
+    "max_tokens": { "type": "integer", "minimum": 1, "maximum": 4096 },
+    "temperature": { "type": "number", "minimum": 0.0, "maximum": 2.0 },
+    "top_p": { "type": "number", "minimum": 0.0, "maximum": 1.0 }
+  },
+  "required": ["prompt"]
+}
