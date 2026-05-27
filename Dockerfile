@@ -55,7 +55,7 @@ RUN pip3 install --no-cache-dir --no-index --find-links=/tmp/wheels \
 WORKDIR /octagon-app
 
 # Copy compiled engine workspace and scripts into live scope
-COPY ./trt-engine /octagon-app/engine
+RUN mkdir -p /octagon-app/engine
 COPY ./inference.py /octagon-app/inference.py
 COPY ./deploy/entrypoint.sh /octagon-app/entrypoint.sh
 RUN chmod +x /octagon-app/entrypoint.sh
