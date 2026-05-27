@@ -1,0 +1,83 @@
+{
+  "ingestion_metadata": {
+    "timestamp": "2026-05-27T15:23:05Z",
+    "target_orchestrator": "Jemma-Tenzor / Octagon OS",
+    "reference_tier_root": "external/TensorRT-Edge-LLM",
+    "isolation_boundary_status": "LOCKED",
+    "file_count": 14,
+    "subsystem_count": 11
+  },
+  "missing_dependencies_report": [
+    {
+      "dependency": "tensorrt",
+      "tier": "Build + Compilation System",
+      "type": "C++ / Dynamic Library",
+      "impact": "Required to compile custom plugins and bind backend kernels"
+    },
+    {
+      "dependency": "nvidia-cuda-toolkit",
+      "tier": "Hardware Tooling",
+      "type": "System Tooling / NVCC Compiler",
+      "impact": "Crucial for compiling any element under cpp/ and plugins/"
+    },
+    {
+      "dependency": "cutlass",
+      "tier": "CUDA Source Dependencies",
+      "type": "Header-only Template Library",
+      "impact": "Used inside custom GEMM operators under plugins/"
+    },
+    {
+      "dependency": "torch",
+      "tier": "Model Weights Loading",
+      "type": "Python Package",
+      "impact": "Required for weight checkpoint conversion utilities"
+    }
+  ],
+  "drift_risk_analysis": {
+    "overall_risk_score": "LOW",
+    "components": {
+      "active_runtime_drift": {
+        "status": "PROTECTED",
+        "safeguards": "No internal modules from external/ are imported or evaluated during active execution of src/*. Active code remains thin and fully portable."
+      },
+      "build_isolation_drift": {
+        "status": "SECURED",
+        "safeguards": "Dockerfile ignores external/ folders from intermediate build steps, retaining small footprint configurations and offline build reproducibility."
+      },
+      "dependency_drift": {
+        "status": "MONITORED",
+        "safeguards": "System requirements.txt remains the immutable list of truth, preventing unexpected library downloads or dependency failures during Cloud Run pipeline updates."
+      }
+    }
+  },
+  "proposed_future_ingestion_sequence": [
+    {
+      "step": 1,
+      "subsystem": "tokenizer_reference/",
+      "objective": "Adopt advanced vocabulary optimization logic into active parsing libraries safely",
+      "prerequisites": ["transformers"],
+      "risk_rating": "Negligible"
+    },
+    {
+      "step": 2,
+      "subsystem": "orchestration_reference/",
+      "objective": "Elevate local FastAPI endpoints and queue architectures to utilize production templates",
+      "prerequisites": ["fastapi", "uvicorn"],
+      "risk_rating": "Medium"
+    },
+    {
+      "step": 3,
+      "subsystem": "runtime_reference/",
+      "objective": "Update current memory controllers with systematic diagnostic memory check logic",
+      "prerequisites": ["numpy"],
+      "risk_rating": "Medium"
+    },
+    {
+      "step": 4,
+      "subsystem": "builder_reference/",
+      "objective": "Integrate Cloud Run orchestration scripts to dynamically look up prebuilt engine shapes",
+      "prerequisites": ["tensorrt_llm==0.10.0"],
+      "risk_rating": "High"
+    }
+  ]
+}
