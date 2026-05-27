@@ -1,0 +1,101 @@
+# Comprehensive GPU compilation and Cloud Run deployment pipeline trigger
+# Target Repository: rodlife1314/tensorrt-edge-llm (branch: main)
+# Triggers full TensorRT-LLM engine building, multi-stage compilation, and automated serverless container rollouts.
+
+steps:
+  # Step 1: Pull HF Weights into local cache or copy from existing GCS bucket storage
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'Synchronize Weights & Assets'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "=========================================================="
+        echo "🚀 OCTAGON OS [PRODUCTION] SELECTION PHASE"
+        echo "=========================================================="
+        mkdir -p ./model-weights
+        if gsutil ls gs://${_WEIGHTS_BUCKET_NAME}/${_MODEL_ID}/ >/dev/null 2>&1; then
+          echo "[CACHE HIT] Copying weight assets from gs://${_WEIGHTS_BUCKET_NAME}/${_MODEL_ID}/..."
+          gsutil -m rsync -r gs://${_WEIGHTS_BUCKET_NAME}/${_MODEL_ID}/ ./model-weights/
+        else
+          echo "[CACHE MISS] Fetching snapshot weights from HuggingFace Hub: ${_MODEL_REPO_TAG}"
+          pip3 install -U huggingface_hub
+          python3 -c "from huggingface_hub import snapshot_download; snapshot_download(repo_id='${_MODEL_REPO_TAG}', local_dir='./model-weights', token='\${_HF_TOKEN}')"
+        fi
+
+  # Step 2: Build TensorRT Engine inside temporary build container
+  - name: 'nvidia/cuda:12.4.1-devel-ubuntu22.04'
+    id: 'Compile TensorRT-LLM Engine'
+    entrypoint: 'bash'
+    env:
+      - 'DEBIAN_FRONTEND=noninteractive'
+    args:
+      - '-c'
+      - |
+        echo "=========================================================="
+        echo "🔧 OCTAGON OS [PRODUCTION] COMPILATION PHASE"
+        echo "=========================================================="
+        apt-get update && apt-get install -y python3-pip git-lfs wget
+        pip3 install --upgrade pip
+        pip3 install tensorrt_llm==0.10.0 --extra-index-url https://pypi.nvidia.com
+        
+        echo "Converting HuggingFace Weights to TensorRT-LLM model checkpoints..."
+        python3 /usr/local/lib/python3.10/dist-packages/tensorrt_llm/commands/convert.py \
+          --model_dir ./model-weights \
+          --output_dir ./trt-checkpoint \
+          --dtype float16
+
+        echo "Compiling optimized TensorRT binary engine..."
+        trtllm-build \
+          --checkpoint_dir ./trt-checkpoint \
+          --output_dir ./trt-engine \
+          --gemm_plugin float16 \
+          --max_batch_size 8 \
+          --max_input_len 2048 \
+          --max_output_len 512
+
+  # Step 3: Package compiled Engine alongside python web services
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Assemble Engine Production Container'
+    args: [
+      'build',
+      '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/tensorrt-edge/engine:${_MODEL_ID}-${_QUANT_LEVEL}',
+      '-f', 'Dockerfile',
+      '.'
+    ]
+
+  # Step 4: Push compiled GPU container to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Publish Engine Container'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/tensorrt-edge/engine:${_MODEL_ID}-${_QUANT_LEVEL}']
+
+  # Step 5: Secure serverless Cloud Run V2 Deployment (Scale-to-GPU enabled)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'Deploy GPU Container to Cloud Run'
+    entrypoint: 'gcloud'
+    args: [
+      'beta', 'run', 'deploy', 'octagon-engine-${_MODEL_ID}',
+      '--image', 'us-central1-docker.pkg.dev/$PROJECT_ID/tensorrt-edge/engine:${_MODEL_ID}-${_QUANT_LEVEL}',
+      '--region', 'us-central1',
+      '--no-cpu-throttling',
+      '--cpu', '4',
+      '--memory', '16Gi',
+      '--gpu', '1',
+      '--gpu-type', 'nvidia-l4',
+      '--port', '8000',
+      '--ingress', 'all',
+      '--allow-unauthenticated'
+    ]
+
+substitutions:
+  _MODEL_ID: 'llama3-8b'
+  _MODEL_REPO_TAG: 'meta-llama/Meta-Llama-3-8B-Instruct'
+  _QUANT_LEVEL: 'int8'
+  _WEIGHTS_BUCKET_NAME: 'rodlife1314-weights-bucket'
+
+options:
+  machineType: 'E2_HIGHCPU_32'
+  volumes:
+    - name: 'model_volume'
+      path: '/model-weights'
+timeout: '3600s'

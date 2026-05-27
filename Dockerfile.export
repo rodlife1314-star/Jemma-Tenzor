@@ -1,0 +1,42 @@
+# Ubuntu base with Python for CPU-safe model conversion, tokenization packaging and environment validation
+FROM ubuntu:22.04
+
+LABEL maintainer="rodlife1314@gmail.com"
+LABEL target="TensorRT-LLM CPU Export Environment"
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV LANG=C.UTF-8
+
+# Install foundational build tools and Python
+RUN apt-get update && apt-get install -y \
+    python3-pip \
+    python3-dev \
+    git \
+    git-lfs \
+    curl \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Upgrade pip and install huggingface tools + conversion requirements
+RUN pip3 install --no-cache-dir --upgrade pip && \
+    pip3 install --no-cache-dir \
+    huggingface_hub \
+    transformers \
+    sentencepiece \
+    numpy \
+    pydantic \
+    fastapi \
+    uvicorn
+
+WORKDIR /workspace
+
+# Copy conversion script skeleton
+COPY ./deploy/entrypoint.sh /workspace/entrypoint.sh
+RUN chmod +x /workspace/entrypoint.sh
+
+# Expose lightweight diagnostics endpoint (port 8080 for CPU verification)
+EXPOSE 8080
+
+ENTRYPOINT ["/workspace/entrypoint.sh"]
+CMD ["export"]

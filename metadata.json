@@ -1,0 +1,6 @@
+{
+  "name": "Octagon OS",
+  "description": "Digital runtime and control console for TensorRT edge LLM deployment, CI/CD triggering, config generation, and container optimization scaling.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
