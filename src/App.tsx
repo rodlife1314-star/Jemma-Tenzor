@@ -244,7 +244,7 @@ export default function App() {
 
     const logs = [
       `[INFO] [INGESTION STATE] Initiating Incremental validation for ${subName}...`,
-      `[CHECK] Source Repo Check: rodlife1314/tensorrt-edge-llm (branch: main)`,
+      `[CHECK] Source Repo Check: rodlife1314-star/Pathfinder (branch: main)`,
       `[CHECK] Isolation Guard: Ensuring no overwrite of existing Octagon control definitions. Passed.`,
       `[INFO] Target path locked: ${selectedSub?.path || "root"}`,
       `[PACKAGING] Scanning dependencies and modules for packaging anomalies...`,
@@ -362,7 +362,7 @@ export default function App() {
           </div>
           <div className="flex items-center gap-2 bg-[#1e2230]/40 px-3 py-1.5 rounded-md border border-blue-900/20 text-blue-300">
             <GitBranch className="h-3.5 w-3.5" />
-            <span className="font-mono text-[10px] font-semibold">tensorrt-edge-llm:main</span>
+            <span className="font-mono text-[10px] font-semibold">Pathfinder:main</span>
           </div>
         </div>
       </header>
@@ -737,13 +737,13 @@ export default function App() {
         <div className="flex items-center gap-1">
           <span>Target repo link:</span>
           <a
-            href="https://github.com/rodlife1314/tensorrt-edge-llm"
+            href="https://github.com/rodlife1314-star/Pathfinder"
             target="_blank"
             rel="noopener noreferrer"
             className="text-slate-300 hover:text-blue-400 transition-colors font-mono flex items-center gap-0.5"
             id="footer-repo-link"
           >
-            rodlife1314/tensorrt-edge-llm <ExternalLink className="h-3 w-3 inline" />
+            rodlife1314-star/Pathfinder <ExternalLink className="h-3 w-3 inline" />
           </a>
         </div>
       </footer>

@@ -1,7 +1,7 @@
 #!/bin/bash
 # ==============================================================================
 # OCTAGON OS - DIGITAL RUNTIME REPO DEPLOYMENT AND TRIGGER SHELL
-# Target: rodlife1314/tensorrt-edge-llm (branch: main)
+# Target: rodlife1314-star/Pathfinder (branch: main)
 # ==============================================================================
 
 set -eo pipefail
@@ -44,7 +44,7 @@ elif [ "$MODE" = "serve" ]; then
         exec python3 inference.py
     else
         echo "[DRY RUN] Web server mock starting since inference.py is executing in simulated environment..."
-        exec python3 -m http.server 8000
+        exec python3 -m http.server "${PORT:-8080}"
     fi
 else
     echo "Unknown deployment parameter: $MODE"

@@ -1,6 +1,6 @@
 # Octagon OS Deployment Architecture Runbook
-**Operator:** rodlife1314 (rodlife1314@gmail.com)  
-**Target Git Repo:** `rodlife1314/tensorrt-edge-llm`  
+**Operator:** rodlife1314-star (rodlife1314@gmail.com)  
+**Target Git Repo:** `rodlife1314-star/Pathfinder`  
 **Deployment Model:** Selection ➔ Deployment ➔ Action Loop  
 
 ---
@@ -41,7 +41,7 @@ Once validated, push configuration files directly to your main repository branch
 git commit -m "Add TensorRT Edge-LLM container deployment layer"
 git push origin main
 ```
-*The `tensorrt-edge-llm-trigger` automatically initiates the compiler execution cascade.*
+*The `pathfinder-trigger` automatically initiates the compiler execution cascade.*
 
 ### Step 4: Scale-to-GPU Live Monitoring
 Upon a successful build process, retrieve service URL pings:

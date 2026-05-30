@@ -1,5 +1,5 @@
 # CPU-safe evaluation and validation pipeline trigger
-# Target Repository: rodlife1314/tensorrt-edge-llm (branch: main)
+# Target Repository: rodlife1314-star/Pathfinder (branch: main)
 # Use this to confirm packaging, script syntax, and structural integration without requiring expensive GPU quotas.
 
 steps:
@@ -13,10 +13,10 @@ steps:
         echo "=========================================================="
         echo "🔷 OCTAGON OS [EXPORT] PIPELINE AUDIT"
         echo "=========================================================="
-        echo "Build Trigger: tensorrt-edge-llm-trigger"
+        echo "Build Trigger: pathfinder-trigger"
         echo "Branch: main"
         echo "Target Zone: us-central1"
-        echo "Active Operator: rodlife1314"
+        echo "Active Operator: rodlife1314-star"
         echo "Timestamp: $(date -u)"
         
   # Step 2: Validate Dockerfile.export syntax by building a lightweight CPU image

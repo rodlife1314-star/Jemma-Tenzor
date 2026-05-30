@@ -1,5 +1,5 @@
 # Jemma-Tenzor Ingestion Architecture Map (Octagon OS)
-**Target:** Ingestion of `rodlife1314/tensorrt-edge-llm` into Octagon OS  
+**Target:** Ingestion of `rodlife1314-star/Pathfinder` into Octagon OS  
 **Status:** PROPOSED BLUEPRINT (Classification Phase)  
 **Security Level:** Standard (Zero Hardcoded Secrets Enforced)
 
@@ -89,4 +89,4 @@ We organize the incoming codebase into six distinct functional subsystems. Upstr
 ## 🚦 Integration Safety Rules
 1. **Immutable Reference Files**: Original repository code must reside under subdirectories to prevent file contamination.
 2. **Duplicate Check**: Guard against declaring multiple incompatible packages in standard `requirements.txt` tiers. Depend strictly on the container definitions.
-3. **Trigger Continuity**: The existing trigger (`tensorrt-edge-llm-trigger`) is protected and remains configured pointing to our main orchestrations.
+3. **Trigger Continuity**: The existing trigger (`pathfinder-trigger`) is protected and remains configured pointing to our main orchestrations.

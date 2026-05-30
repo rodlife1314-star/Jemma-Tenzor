@@ -72,7 +72,7 @@ function buildPresetConfigs(model: string, hardware: string, quant: string) {
   }
 
   const cloudbuildYaml = `# Octagon OS Cloud Build Trigger Configuration
-# Trigger Location: rodlife1314/tensorrt-edge-llm (branch: main)
+# Trigger Location: rodlife1314-star/Pathfinder (branch: main)
 # Digital Runtime Target: TensorRT-LLM v0.10.0 + CUDA ${cudaVersion}
 steps:
   # Step 1: Clone Model Weights or pull caching layer from GCS buckets
@@ -204,7 +204,7 @@ ENTRYPOINT ["python3", "/octagon-app/inference.py"]
   const deploySh = `#!/bin/bash
 # ==============================================================================
 # OCTAGON OS - GPU RUNTIME DEPLOYMENT PIPELINE
-# Repository: rodlife1314/tensorrt-edge-llm
+# Repository: rodlife1314-star/Pathfinder
 # Mode: GPU Container Deploy (Cloud Run V2 GPU-capable)
 # ==============================================================================
 
@@ -214,11 +214,11 @@ echo "=========================================================="
 echo "🛡️  STEP 1: Register Cloud Build CI/CD Pipeline Trigger "
 echo "=========================================================="
 gcloud builds triggers create github \\
-  --repo-owner=rodlife1314 \\
-  --repo-name=tensorrt-edge-llm \\
+  --repo-owner=rodlife1314-star \\
+  --repo-name=Pathfinder \\
   --branch-pattern=main \\
   --build-config=cloudbuild.export.yaml \\
-  --name=tensorrt-edge-llm-trigger \\
+  --name=pathfinder-trigger \\
   --region=us-central1
 
 echo ""
@@ -405,7 +405,7 @@ app.post("/api/copilot", async (req, res) => {
   const modelChoice = "gemini-3.5-flash";
 
   const systemInstruction = `You are the core digital intelligence of Octagon OS, a robust systems architect specialized in deploying TensorRT-LLM and AI workloads onto edge platforms and cloud architectures.
-The user is 'rodlife1314' (rodlife1314@gmail.com). Their project is 'rodlife1314/tensorrt-edge-llm' hosting a TensorRT edge LLM setup using a GitHub trigger linked to Google Cloud Build ('tensorrt-edge-llm-trigger').
+The user is 'rodlife1314-star' (rodlife1314@gmail.com). Their project is 'rodlife1314-star/Pathfinder' hosting a TensorRT edge LLM setup using a GitHub trigger linked to Google Cloud Build ('pathfinder-trigger').
 The user is working with the 'Selection → Deployment → Action' loop of the Octagon Digital Runtime.
 
 Current active environment models being configured in the panel:
@@ -460,14 +460,14 @@ gcloud beta run deploy octagon-engine-service \\
       matchedResponse = mockResponses.gcloud;
     } else {
       matchedResponse = `### Octagon OS Architectural Directive
-Greetings **rodlife1314**. I am the digital intelligence core of **Octagon OS**.
+Greetings **rodlife1314-star**. I am the digital intelligence core of **Octagon OS**.
 
 I am ready to help you optimize the **${context.model || "Llama-3 8B"}** engine for **${context.hardware || "NVIDIA L4"}** with **${context.quantization || "INT8"}**.
 
 **Deployment Status of Trigger**:
-- Repository Linked: \`rodlife1314/tensorrt-edge-llm\`
+- Repository Linked: \`rodlife1314-star/Pathfinder\`
 - Build Trigger Config: \`cloudbuild.export.yaml\`
-- Active Cloud Trigger: \`tensorrt-edge-llm-trigger\`
+- Active Cloud Trigger: \`pathfinder-trigger\`
 
 To enable fully active AI-powered dynamic answers, configure your \`GEMINI_API_KEY\` in the **Settings > Secrets** panel in AI Studio. 
 

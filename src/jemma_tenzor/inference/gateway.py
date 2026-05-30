@@ -21,6 +21,10 @@ except ImportError:
             def decorator(func):
                 return func
             return decorator
+        def get(self, url):
+            def decorator(func):
+                return func
+            return decorator
     class BaseModel:
         pass
     class HTTPException(Exception):
@@ -29,6 +33,20 @@ except ImportError:
             self.detail = detail
 
 app = FastAPI()
+
+@app.get("/")
+def root():
+    return {
+        "status": "alive",
+        "service": "jemma-tenzor",
+        "runtime": "octagon-os"
+    }
+
+@app.get("/healthz")
+def healthz():
+    return {
+        "status": "healthy"
+    }
 
 class InferencePayload(BaseModel):
     prompt: str
@@ -56,6 +74,6 @@ async def generate_token_stream(payload: InferencePayload):
 if __name__ == "__main__":
     import uvicorn
     print("[INFERENCE] Initializing FastAPI Orchestration interface...")
-    print(f"[INFO] Serving live gateway mapping endpoint on port {os.environ.get('PORT', '8000')}...")
-    uvicorn.run("inference:app", host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
+    print(f"[INFO] Serving live gateway mapping endpoint on port {os.environ.get('PORT', '8080')}...")
+    uvicorn.run("inference:app", host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
 

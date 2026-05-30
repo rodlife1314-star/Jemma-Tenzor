@@ -1,16 +1,16 @@
 #!/bin/bash
 # ==============================================================================
 # OCTAGON OS - INTERACTIVE DEPLOYMENT AUTOMATOR
-# Automated script helper specifically optimized for rodlife1314
-# Target Project: tensorrt-edge-llm
+# Automated script helper specifically optimized for rodlife1314-star
+# Target Project: Pathfinder
 # ==============================================================================
 
 set -eo pipefail
 
 REGION="us-central1"
-TRIGGER_NAME="tensorrt-edge-llm-trigger"
-REPO_OWNER="rodlife1314"
-REPO_NAME="tensorrt-edge-llm"
+TRIGGER_NAME="pathfinder-trigger"
+REPO_OWNER="rodlife1314-star"
+REPO_NAME="Pathfinder"
 BRANCH_PATTERN="main"
 
 echo "=========================================================="

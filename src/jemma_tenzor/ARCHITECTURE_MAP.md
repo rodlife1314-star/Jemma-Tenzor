@@ -1,5 +1,5 @@
 # Jemma-Tenzor Subsystem Ingestion Architecture Map (Phase 3)
-**Target Repository:** `rodlife1314/tensorrt-edge-llm`  
+**Target Repository:** `rodlife1314-star/Pathfinder`  
 **Execution Objective:** Safe, incremental integration into the absolute clean runtime.  
 **State:** PHASE 3 VALIDATION & CONFIG SCHEMAS LINKED  
 
