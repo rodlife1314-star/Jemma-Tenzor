@@ -45,7 +45,31 @@ def root():
 @app.get("/healthz")
 def healthz():
     return {
-        "status": "healthy"
+        "status": "healthy",
+        "service": "pathfinder",
+        "version": "0.1.0",
+        "mode": "cpu_cloud_run"
+    }
+
+@app.get("/version")
+def version():
+    return {
+        "name": "Pathfinder",
+        "version": "0.1.0",
+        "runtime": "octagon-os",
+        "body": "jemma-tenzor",
+        "mode": "recommendation_only"
+    }
+
+@app.get("/pathfinder/demo")
+def pathfinder_demo():
+    return {
+        "challenge": "Why is US inflation falling while employment remains resilient?",
+        "hypothesis": "Disinflation can occur while labour markets remain resilient when supply-side pressures ease, productivity improves, or demand cools without a sharp employment contraction.",
+        "evidence_required": ["CPI", "payrolls", "unemployment", "productivity"],
+        "authority": ["FRED", "BLS"],
+        "dataset_recommendation": ["CPIAUCSL", "PAYEMS", "UNRATE", "OPHNFB"],
+        "operator_gate": "recommendation_only_no_ingestion"
     }
 
 class InferencePayload(BaseModel):
