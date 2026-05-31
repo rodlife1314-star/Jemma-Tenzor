@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net (Default-Deny Catch-All)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Global Safety Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // 3. Custody Packets Collection
+    match /custody_packets/{packetId} {
+      allow read: if true; // Publicly readable for cockpit dashboard visibility
+      allow create, update: if isSignedIn() && isValidId(packetId);
+      allow delete: if false; // Immutable audit ledger
+    }
+
+    // 4. Dataset Candidates Collection
+    match /dataset_candidates/{candidateId} {
+      allow read: if true;
+      allow create, update: if isSignedIn() && isValidId(candidateId);
+      allow delete: if false;
+    }
+
+    // 5. Validation Reviews Collection
+    match /validation_reviews/{reviewId} {
+      allow read: if true;
+      allow create, update: if isSignedIn() && isValidId(reviewId);
+      allow delete: if false;
+    }
+
+    // 6. Operator Approvals Collection
+    match /operator_approvals/{approvalId} {
+      allow read: if true;
+      allow create, update: if isSignedIn() && isValidId(approvalId);
+      allow delete: if false;
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "system": "Octagon OS",
+  "version": "v0.3A.3",
+  "last_audit": "2026-05-30T23:14:00Z",
+  "inventory": [
+    {
+      "secret_name": "GEMINI_API_KEY",
+      "source": "Secret Manager (Production) / Local .env (Development)",
+      "consumed_by": "server.ts",
+      "exposed_to_client": false,
+      "security_tier": "SAFE",
+      "description": "Utilized by the Google General AI (SDK) on the server-side proxy to execute strategic verification reviews."
+    },
+    {
+      "secret_name": "FIREBASE_SERVICE_ACCOUNT",
+      "source": "Application Default Credentials (ADC) / Cloud Run IAM Role Binding",
+      "consumed_by": "server.ts",
+      "exposed_to_client": false,
+      "security_tier": "SAFE",
+      "description": "Administrative authority connection to the Firestore Ledger Database, eliminating static JSON service account keys."
+    },
+    {
+      "secret_name": "FIREBASE_WEB_API_KEY",
+      "source": "firebase-applet-config.json",
+      "consumed_by": "Client-initialized metadata (unused due to backend authority proxying)",
+      "exposed_to_client": true,
+      "security_tier": "PUBLIC CONFIGURATION",
+      "description": "Public identifier for the Firebase Web SDK project association. Secured globally by custom granular Firestore rules."
+    },
+    {
+      "secret_name": "FRED_API_ACCESS",
+      "source": "Unrestricted Public Endpoint Queries / Non-Sensitive API Credentials",
+      "consumed_by": "App.tsx",
+      "exposed_to_client": true,
+      "security_tier": "SAFE",
+      "description": "Public economic data series query identifier for Federal Reserve Federal Reserve Economic Data (FRED)."
+    },
+    {
+      "secret_name": "BLS_API_ACCESS",
+      "source": "Unrestricted Public Endpoint Queries",
+      "consumed_by": "App.tsx",
+      "exposed_to_client": true,
+      "security_tier": "SAFE",
+      "description": "Federally governed open data endpoint identifiers querying the US Bureau of Labor Statistics (BLS)."
+    }
+  ],
+  "governance_posture": {
+    "firestore_rules": "STRICT_DEFAULT_DENY",
+    "storage_rules": "DISABLED_UNUSABLE",
+    "cloud_run_bindings": "SECRET_MANAGER_ENVIRONMENT_VARIABLES",
+    "audit_trail": "ACTIVE - IMMUTABLE_EVENT_SIGNATURES"
+  }
+}

@@ -1,0 +1,183 @@
+{
+  "entities": {
+    "custody_packet": {
+      "title": "CustodyPacket",
+      "description": "Represents the active intelligence packet flowing through the cockpit pipeline.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique packet identifier"
+        },
+        "challenge": {
+          "type": "string",
+          "description": "The specific economic / analytical question"
+        },
+        "authorities": {
+          "type": "array",
+          "description": "Credible sources like FRED, BLS"
+        },
+        "recommendations": {
+          "type": "array",
+          "description": "Target codes recommended by Pathfinder"
+        },
+        "confidence": {
+          "type": "number",
+          "description": "Pathfinder confidence estimate"
+        },
+        "jemmaVerdict": {
+          "type": "string",
+          "description": "Validation review outcome from Jemma"
+        },
+        "redTeamVerdict": {
+          "type": "string",
+          "description": "Validation review outcome from the Red Team"
+        },
+        "operatorApproved": {
+          "type": "boolean",
+          "description": "Operator approval status"
+        },
+        "deployable": {
+          "type": "boolean",
+          "description": "Deploy readiness flag"
+        },
+        "status": {
+          "type": "string",
+          "description": "Packet position on taxonomy status ladder"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "history": {
+          "type": "array",
+          "description": "Historical log of state transitions and actor decisions"
+        }
+      },
+      "required": [
+        "id",
+        "challenge",
+        "status"
+      ]
+    },
+    "dataset_candidate": {
+      "title": "DatasetCandidate",
+      "description": "A URL metadata candidate linked to a custody packet",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "packetId": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "datasetId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "packetId",
+        "url"
+      ]
+    },
+    "validation_review": {
+      "title": "ValidationReview",
+      "description": "Reviews attached by validation engines",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "packetId": {
+          "type": "string"
+        },
+        "reviewType": {
+          "type": "string"
+        },
+        "verdict": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "reviewer": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "packetId",
+        "reviewType",
+        "verdict"
+      ]
+    },
+    "operator_approval": {
+      "title": "OperatorApproval",
+      "description": "The operator digital seal records",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "packetId": {
+          "type": "string"
+        },
+        "operatorId": {
+          "type": "string"
+        },
+        "sealStatus": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "packetId",
+        "sealStatus"
+      ]
+    }
+  },
+  "firestore": {
+    "custody_packets/{packetId}": {
+      "schema": "custody_packet",
+      "description": "Ledger of intelligence custody packets"
+    },
+    "dataset_candidates/{candidateId}": {
+      "schema": "dataset_candidate",
+      "description": "Registered dataset URLs and parameters"
+    },
+    "validation_reviews/{reviewId}": {
+      "schema": "validation_review",
+      "description": "Double secure review reports from validating processes"
+    },
+    "operator_approvals/{approvalId}": {
+      "schema": "operator_approval",
+      "description": "Ledger of operator seal approvals"
+    }
+  }
+}

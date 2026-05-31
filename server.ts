@@ -1,6 +1,8 @@
 import express from "express";
 import path from "path";
 import dotenv from "dotenv";
+import fs from "fs";
+import admin from "firebase-admin";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 
@@ -11,6 +13,229 @@ const app = express();
 const PORT = 3000;
 
 app.use(express.json());
+
+// In-Memory Fallback Store for Custody Ledger (zero-dependency reliability)
+interface LocalStore {
+  custody_packets: Record<string, any>;
+  dataset_candidates: Record<string, any>;
+  validation_reviews: Record<string, any>;
+  operator_approvals: Record<string, any>;
+}
+
+const fallbackStore: LocalStore = {
+  custody_packets: {
+    "PKT-001": {
+      packet_id: "PKT-001",
+      source_agent: "Pathfinder Core v0.2",
+      challenge: "US inflation matching & core yield curves correlation under high labor density",
+      dataset_recommendations: ["CPIAUCSL", "PAYEMS", "UNRATE"],
+      authority_chain: ["FRED", "BLS"],
+      confidence: 94,
+      jemma_verdict: "APPROVED",
+      red_team_verdict: "CLEARED",
+      operator_gate: "LOCKED",
+      current_status: "RECOMMENDATION_CREATED",
+      next_allowed_action: "DATASET_CANDIDATE_REGISTERED",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      history: [
+        {
+          event_id: "EVT-MOCK-INIT-001",
+          timestamp: new Date().toISOString(),
+          old_status: "INITIAL_FORMULATION",
+          new_status: "RECOMMENDATION_CREATED",
+          actor: "Pathfinder Core v0.2",
+          comment: "Initial economic challenge formulated under legal guidelines."
+        }
+      ]
+    }
+  },
+  dataset_candidates: {},
+  validation_reviews: {},
+  operator_approvals: {}
+};
+
+let adminApp: admin.app.App | null = null;
+let firestoreDb: any = null;
+let useFallbackStore = false;
+
+function initFirebaseAdmin() {
+  if (firestoreDb || useFallbackStore) return;
+  try {
+    const configPath = path.join(process.cwd(), "firebase-applet-config.json");
+    if (!fs.existsSync(configPath)) {
+      console.log("[OCTAGON FIREBASE] No config file. Mock ledger active.");
+      useFallbackStore = true;
+      return;
+    }
+
+    const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+    if (!config.projectId) {
+      console.log("[OCTAGON FIREBASE] No projectId. Mock ledger active.");
+      useFallbackStore = true;
+      return;
+    }
+
+    if (admin.apps.length === 0) {
+      adminApp = admin.initializeApp({
+        projectId: config.projectId,
+      });
+    } else {
+      adminApp = admin.apps[0]!;
+    }
+
+    firestoreDb = adminApp.firestore();
+    console.log("[OCTAGON FIREBASE] Firebase Admin initialized with Firestore default DB.");
+  } catch (error) {
+    console.warn("[OCTAGON FIREBASE] Admin initialization failed - using local fallback store:", error);
+    useFallbackStore = true;
+  }
+}
+
+const ALLOWED_NEXT_STATES: Record<string, string[]> = {
+  "RECOMMENDATION_CREATED": ["DATASET_CANDIDATE_REGISTERED"],
+  "DATASET_CANDIDATE_REGISTERED": ["AWAITING_VALIDATION", "JEMMA_APPROVED", "RED_TEAM_CLEARED"],
+  "AWAITING_VALIDATION": ["JEMMA_APPROVED", "RED_TEAM_CLEARED"],
+  "JEMMA_APPROVED": ["RED_TEAM_CLEARED", "FULLY_VERIFIED", "RECOMMENDATION_CREATED"],
+  "RED_TEAM_CLEARED": ["JEMMA_APPROVED", "FULLY_VERIFIED", "RECOMMENDATION_CREATED"],
+  "FULLY_VERIFIED": ["OPERATOR_APPROVED", "RECOMMENDATION_CREATED"],
+  "OPERATOR_APPROVED": ["DEPLOYED", "Deployed (Demo)", "RECOMMENDATION_CREATED"],
+  "DEPLOYED": [],
+  "Deployed (Demo)": []
+};
+
+function recordTransition(packet: any, newState: string, actor: string, comment: string): void {
+  const oldState = packet.current_status || "RECOMMENDATION_CREATED";
+
+  // Enforce transition rules
+  if (oldState !== newState && newState !== "RECOMMENDATION_CREATED") {
+    const allowedTargets = ALLOWED_NEXT_STATES[oldState] || [];
+    const isAllowed = allowedTargets.includes(newState) || 
+                      (oldState === "RECOMMENDATION_CREATED" && newState === "DATASET_CANDIDATE_REGISTERED") ||
+                      (oldState === "DATASET_CANDIDATE_REGISTERED" && newState === "AWAITING_VALIDATION");
+    if (!isAllowed) {
+      throw new Error(`State Transition Guard Warning: Illegal status jump from '${oldState}' to '${newState}' is prohibited on the Cockpit.`);
+    }
+  }
+
+  if (!packet.history) {
+    packet.history = [];
+  }
+
+  const generatedEventId = `EVT-${Date.now()}-${Math.floor(Math.random() * 9000 + 1000)}`;
+
+  packet.history.push({
+    event_id: generatedEventId,
+    timestamp: new Date().toISOString(),
+    old_status: oldState,
+    new_status: newState,
+    actor,
+    comment
+  });
+
+  packet.current_status = newState;
+  packet.updatedAt = new Date().toISOString();
+}
+
+async function getPacketsList(): Promise<any[]> {
+  initFirebaseAdmin();
+  if (useFallbackStore) {
+    return Object.values(fallbackStore.custody_packets);
+  }
+  try {
+    const snapshot = await firestoreDb.collection("custody_packets").get();
+    if (snapshot.empty) {
+      const initial = Object.values(fallbackStore.custody_packets);
+      for (const p of initial) {
+        await firestoreDb.collection("custody_packets").doc(p.packet_id).set(p);
+      }
+      return initial;
+    }
+    return snapshot.docs.map((doc: any) => doc.data());
+  } catch (err: any) {
+    const errMsg = err?.message || "";
+    if (errMsg.includes("NOT_FOUND") || err?.code === 5 || errMsg.includes("not found")) {
+      console.warn("[OCTAGON FIREBASE] Firestore Cloud database not fully provisioned or active yet in host. Activating high-speed Local Ledger store fallback.");
+      useFallbackStore = true;
+    } else {
+      console.warn("[OCTAGON FIREBASE] Firestore read failed, returning backup local copy:", err);
+    }
+    return Object.values(fallbackStore.custody_packets);
+  }
+}
+
+async function savePacket(packet: any): Promise<void> {
+  initFirebaseAdmin();
+  if (useFallbackStore) {
+    fallbackStore.custody_packets[packet.packet_id] = packet;
+    return;
+  }
+  try {
+    await firestoreDb.collection("custody_packets").doc(packet.packet_id).set(packet);
+  } catch (err: any) {
+    const errMsg = err?.message || "";
+    if (errMsg.includes("NOT_FOUND") || err?.code === 5 || errMsg.includes("not found")) {
+      useFallbackStore = true;
+    }
+    console.error("[OCTAGON FIREBASE] Failed writing packet to Firestore, switching to local store:", err);
+    fallbackStore.custody_packets[packet.packet_id] = packet;
+  }
+}
+
+async function saveCandidate(candidate: any): Promise<void> {
+  initFirebaseAdmin();
+  if (useFallbackStore) {
+    fallbackStore.dataset_candidates[candidate.id] = candidate;
+    return;
+  }
+  try {
+    await firestoreDb.collection("dataset_candidates").doc(candidate.id).set(candidate);
+  } catch (err: any) {
+    const errMsg = err?.message || "";
+    if (errMsg.includes("NOT_FOUND") || err?.code === 5 || errMsg.includes("not found")) {
+      useFallbackStore = true;
+    }
+    console.error("[OCTAGON FIREBASE] Failed writing candidate to Firestore, switching to local store:", err);
+    fallbackStore.dataset_candidates[candidate.id] = candidate;
+  }
+}
+
+async function saveValidationReview(review: any): Promise<void> {
+  initFirebaseAdmin();
+  if (useFallbackStore) {
+    fallbackStore.validation_reviews[review.id] = review;
+    return;
+  }
+  try {
+    await firestoreDb.collection("validation_reviews").doc(review.id).set(review);
+  } catch (err: any) {
+    const errMsg = err?.message || "";
+    if (errMsg.includes("NOT_FOUND") || err?.code === 5 || errMsg.includes("not found")) {
+      useFallbackStore = true;
+    }
+    console.error("[OCTAGON FIREBASE] Failed writing review to Firestore, switching to local store:", err);
+    fallbackStore.validation_reviews[review.id] = review;
+  }
+}
+
+async function saveOperatorApproval(approval: any): Promise<void> {
+  initFirebaseAdmin();
+  if (useFallbackStore) {
+    fallbackStore.operator_approvals[approval.id] = approval;
+    return;
+  }
+  try {
+    await firestoreDb.collection("operator_approvals").doc(approval.id).set(approval);
+  } catch (err: any) {
+    const errMsg = err?.message || "";
+    if (errMsg.includes("NOT_FOUND") || err?.code === 5 || errMsg.includes("not found")) {
+      useFallbackStore = true;
+    }
+    console.error("[OCTAGON FIREBASE] Failed writing seal to Firestore, switching to local store:", err);
+    fallbackStore.operator_approvals[approval.id] = approval;
+  }
+}
+
 
 // Initialize Gemini SDK lazily to avoid crashing on startup if the key is missing
 let ai: GoogleGenAI | null = null;
@@ -492,6 +717,229 @@ In the meantime, I can generate all deployment scripts, Triton configurations, a
   } catch (error: any) {
     console.error("Gemini Copilot Error:", error);
     res.status(500).json({ error: error.message || "Engine conversation failed" });
+  }
+});
+
+// ==============================================================================
+// v0.3A PERSISTENT CUSTODY LEDGER API ENDPOINTS
+// ==============================================================================
+
+// 1. Fetch packets list
+app.get("/api/packets", async (req, res) => {
+  try {
+    const list = await getPacketsList();
+    res.json(list);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || "Failed to fetch packets" });
+  }
+});
+
+// 2. Register dataset URL as candidate metadata
+app.post("/api/candidates/register", async (req, res) => {
+  try {
+    const { packet_id, url } = req.body;
+    if (!packet_id || !url) {
+      return res.status(400).json({ error: "Missing packet_id or url parameter" });
+    }
+
+    const packets = await getPacketsList();
+    const packet = packets.find(p => p.packet_id === packet_id);
+    if (!packet) {
+      return res.status(404).json({ error: "Custody packet not found" });
+    }
+
+    const candidateId = `CAN-${Date.now()}`;
+    const datasetId = `DSET-${Math.floor(Math.random() * 9000 + 1000)}`;
+
+    const candidate = {
+      id: candidateId,
+      packetId: packet_id,
+      url: url,
+      datasetId: datasetId,
+      name: `External Dataset [${datasetId}]`,
+      status: "DATASET_CANDIDATE_REGISTERED",
+      createdAt: new Date().toISOString()
+    };
+
+    await saveCandidate(candidate);
+
+    // Update custody packet state: ladder states URL input leads to DATASET_CANDIDATE_REGISTERED
+    recordTransition(packet, "DATASET_CANDIDATE_REGISTERED", "OPERATOR", `Submitted candidate dataset URL: ${url}`);
+    packet.url_candidate = url;
+    packet.next_allowed_action = "AWAITING_VALIDATION";
+
+    await savePacket(packet);
+
+    res.json({ success: true, candidate, packet });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || "Failed to register candidate" });
+  }
+});
+
+// 3. Submit validation verdict
+app.post("/api/packets/verdict", async (req, res) => {
+  try {
+    const { packet_id, reviewer, reviewType, verdict, reason } = req.body;
+    if (!packet_id || !reviewer || !reviewType || !verdict) {
+      return res.status(400).json({ error: "Missing required parameters" });
+    }
+
+    const packets = await getPacketsList();
+    const packet = packets.find(p => p.packet_id === packet_id);
+    if (!packet) {
+      return res.status(404).json({ error: "Custody packet not found" });
+    }
+
+    const reviewId = `REV-${Date.now()}`;
+    const review = {
+      id: reviewId,
+      packetId: packet_id,
+      reviewType, // JEMMA or RED_TEAM
+      verdict,
+      reason: reason || "No description provided",
+      reviewer,
+      createdAt: new Date().toISOString()
+    };
+
+    await saveValidationReview(review);
+
+    // Dynamic state machine triggers based on verdicts
+    let targetState = packet.current_status || "RECOMMENDATION_CREATED";
+    if (reviewType === "JEMMA") {
+      packet.jemma_verdict = verdict;
+      targetState = "JEMMA_APPROVED";
+      packet.next_allowed_action = "RED_TEAM_CLEARED";
+    } else if (reviewType === "RED_TEAM") {
+      packet.red_team_verdict = verdict;
+      targetState = "RED_TEAM_CLEARED";
+      packet.next_allowed_action = "FULLY_VERIFIED";
+    }
+
+    if (packet.jemma_verdict === "APPROVED" && packet.red_team_verdict === "CLEARED") {
+      targetState = "FULLY_VERIFIED";
+      packet.next_allowed_action = "OPERATOR_APPROVED";
+    }
+
+    recordTransition(packet, targetState, reviewType, `Validation review registered. Verdict: ${verdict}. Reason: ${reason || "Verified structure."}`);
+    await savePacket(packet);
+
+    res.json({ success: true, review, packet });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || "Failed to save validation review" });
+  }
+});
+
+// 4. Seal & Approve by Operator
+app.post("/api/packets/seal", async (req, res) => {
+  try {
+    const { packet_id, operatorId, sealStatus } = req.body;
+    if (!packet_id || !operatorId || !sealStatus) {
+      return res.status(400).json({ error: "Missing required parameters" });
+    }
+
+    const packets = await getPacketsList();
+    const packet = packets.find(p => p.packet_id === packet_id);
+    if (!packet) {
+      return res.status(404).json({ error: "Custody packet not found" });
+    }
+
+    const approvalId = `APP-${Date.now()}`;
+    const approval = {
+      id: approvalId,
+      packetId: packet_id,
+      operatorId,
+      sealStatus,
+      timestamp: new Date().toISOString()
+    };
+
+    await saveOperatorApproval(approval);
+
+    packet.operator_gate = sealStatus === "APPROVED" ? "APPROVED" : "LOCKED";
+    
+    let targetState = "RECOMMENDATION_CREATED";
+    let nextAllowed = "DATASET_CANDIDATE_REGISTERED";
+    let logMsg = `Revoked digital seal signature. Packet returned back to Formulation.`;
+
+    if (sealStatus === "APPROVED") {
+      targetState = "OPERATOR_APPROVED";
+      nextAllowed = "INGESTION_AUTHORIZED";
+      logMsg = `Granted Operator Approval seal signature. Operational locks released.`;
+    }
+
+    recordTransition(packet, targetState, "OPERATOR", logMsg);
+    packet.next_allowed_action = nextAllowed;
+
+    await savePacket(packet);
+
+    res.json({ success: true, approval, packet });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || "Failed to seal packet" });
+  }
+});
+
+// 4B. Simulated Deployment Transition
+app.post("/api/packets/deploy", async (req, res) => {
+  try {
+    const { packet_id } = req.body;
+    if (!packet_id) {
+      return res.status(400).json({ error: "Missing packet_id parameter" });
+    }
+
+    const packets = await getPacketsList();
+    const packet = packets.find(p => p.packet_id === packet_id);
+    if (!packet) {
+      return res.status(404).json({ error: "Custody packet not found" });
+    }
+
+    recordTransition(packet, "Deployed (Demo)", "OPERATOR", "Simulated production container deployment finalized successfully.");
+    packet.next_allowed_action = "Deployment fully cataloged and running live on CPU backbone";
+    await savePacket(packet);
+
+    res.json({ success: true, packet });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || "Failed to deploy packet" });
+  }
+});
+
+// 5. Build/create packet via Pathfinder Formulation
+app.post("/api/packets", async (req, res) => {
+  try {
+    const { challenge, dataset_recommendations, authority_chain, confidence } = req.body;
+    if (!challenge) {
+      return res.status(400).json({ error: "Missing challenge parameter" });
+    }
+
+    const packetId = `PKT-${Math.floor(Math.random() * 900 + 100)}`;
+    const newPacket = {
+      packet_id: packetId,
+      source_agent: "Pathfinder Core v0.2",
+      challenge,
+      dataset_recommendations: dataset_recommendations || [],
+      authority_chain: authority_chain || [],
+      confidence: confidence || 90,
+      jemma_verdict: "PENDING",
+      red_team_verdict: "PENDING",
+      operator_gate: "LOCKED",
+      current_status: "RECOMMENDATION_CREATED",
+      next_allowed_action: "DATASET_CANDIDATE_REGISTERED",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      history: [
+        {
+          event_id: `EVT-FORM-${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          old_status: "INITIAL_FORMULATION",
+          new_status: "RECOMMENDATION_CREATED",
+          actor: "Pathfinder Core v0.2",
+          comment: "Initial economic challenge formulated under legal guidelines."
+        }
+      ]
+    };
+
+    await savePacket(newPacket);
+    res.json(newPacket);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || "Failed to generate packet" });
   }
 });
 
